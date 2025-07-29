@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Advanced Charts Session Parser</title><style>.input-text {
+		margin: 10px 0;
+	}
+
+	.results {
+		margin-top: 10px;
+		word-break: break-all;
+	}
+
+	table {
+		width: 100%;
+	}
+
+	tr {
+		border-top: none;
+		color:#666B85;
+		font-size:16px;
+		font-weight:normal;
+		text-shadow: 0 1px 1px rgba(256, 256, 256, 0.1);
+	}
+
+	tr:first-child {
+		border-top:none;
+	}
+
+	tr:last-child {
+		border-bottom:none;
+	}
+
+	tr:nth-child(odd) td {
+		background:#EBEBEB;
+	}
+
+	tr:last-child td:first-child {
+		border-bottom-left-radius:3px;
+	}
+
+	tr:last-child td:last-child {
+		border-bottom-right-radius:3px;
+	}
+
+	td {
+		background:#FFFFFF;
+		padding:20px;
+		text-align:left;
+		vertical-align:middle;
+		font-weight:300;
+		font-size:18px;
+		border-right: 1px solid #C1C3D1;
+	}
+
+	td:last-child {
+		border-right: 0px;
+	}
+
+	th.text-left {
+		text-align: left;
+	}
+
+	th.text-center {
+		text-align: center;
+	}
+
+	th.text-right {
+		text-align: right;
+	}
+
+	td.text-left {
+		text-align: left;
+	}
+
+	td.text-center {
+		text-align: center;
+	}
+
+	td.text-right {
+		text-align: right;
+	}
+
+	.table-fill {
+		background: white;
+		border-radius:3px;
+		border-collapse: collapse;
+		min-height: 320px;
+		margin: auto;
+		max-width: 600px;
+		padding:5px;
+		width: 100%;
+		box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+		padding: 15px;
+	}
+
+	.input-field {
+		width: 100%;
+		font-size: 20px;
+		line-height: 1.5;
+		margin-bottom: 10px;
+		padding: 0 5px;
+	}
+
+	table {
+		border-collapse: collapse;
+	}</style></head><body><form class="table-fill"><h1>Advanced Charts Session Parser</h1><input id="session" class="input-field" name="session" value="24x7" maxlength="500" autocomplete="off"><div id="result" class="results"></div></form><script defer="defer">(()=>{var t={151:(t,e)=>{"use strict";function n(t,e){if(void 0===t)throw new Error("".concat(null!=e?e:"Value"," is undefined"));return t}function r(t,e){if(null===t)throw new Error("".concat(null!=e?e:"Value"," is null"));return t}e.ensureNotNull=e.assert=void 0,e.assert=function(t,e){if(!t)throw new Error("Assertion failed".concat(e?": ".concat(e):""))},e.ensureNotNull=r},757:(t,e,n)=>{"use strict";function r(t){return"number"==typeof t&&isFinite(t)}function s(t){if(!t||"object"!=typeof t)return t;let e;e=Array.isArray(t)?[]:{};for(const n in t)if(t.hasOwnProperty(n)){const r=t[n];e[n]=r&&"object"==typeof r?s(r):r}return e}function i(t,e){for(const n in e)null!==e[n]&&"object"==typeof e[n]&&t.hasOwnProperty(n)?i(t[n],e[n]):t[n]=e[n];return t}function o(t){return"object"==typeof t&&null!==t}function a(t){return null!=t&&(t.constructor===Function||"[object Function]"===Object.prototype.toString.call(t))}function c(t,e,n=""){if(t===e)return[!0,n];if(a(t)&&(t=void 0),a(e)&&(e=void 0),null==t||null==e)return[t===e,n];if("object"!=typeof t&&"object"!=typeof e)return[t===e,n];if(Array.isArray(t)&&Array.isArray(e)){const r=t.length;if(r!==e.length)return[!1,n];for(let s=0;s<r;s++){const r=c(t[s],e[s],n+"["+s+"]");if(!r[0])return r}return[!0,n]}if(Array.isArray(t)||Array.isArray(e))return[!1,n];if(Object.keys(t).length!==Object.keys(e).length)return[!1,n];for(const r in t){const s=c(t[r],e[r],n+"["+r+"]");if(!s[0])return s}return[!0,n]}n.r(e),n.d(e,{clone:()=>s,deepEquals:()=>c,isFunction:()=>a,isNumber:()=>r,isObject:()=>o,merge:()=>i})},643:function(t,e,n){t=n.nmd(t);const{clone:r,merge:s,isFunction:i,deepEquals:o,isObject:a,isNumber:c}=n(757);var u,l=Array.isArray||function(t){return"[object Array]"===Object.prototype.toString.call(t)};function h(t,e){t.prototype=Object.create(e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}})}"undefined"!=typeof window?(u=window.TradingView=window.TradingView||{},window.isNumber=c,window.isFunction=i,window.inherit=h,window.isArray=l):u=this.TradingView=this.TradingView||{},u.isNaN=function(t){return!(t<=0||t>0)},u.isAbsent=function(t){return null==t},u.isExistent=function(t){return null!=t},Number.isNaN=Number.isNaN||function(t){return t!=t},u.isSameType=function(t,e){return Number.isNaN(t)||Number.isNaN(e)?Number.isNaN(t)===Number.isNaN(e):{}.toString.call(t)==={}.toString.call(e)},u.isInteger=function(t){return"number"==typeof t&&t%1==0},u.isString=function(t){return null!=t&&t.constructor===String},u.isInherited=function(t,e){if(null==t||null==t.prototype)throw new TypeError("isInherited: child should be a constructor function");if(null==e||null==e.prototype)throw new TypeError("isInherited: parent should be a constructor function");return t.prototype instanceof e||t.prototype===e.prototype},u.clone=r,u.deepEquals=o,u.merge=s,t&&t.exports&&(t.exports={inherit:h,clone:u.clone,merge:u.merge,isNumber:c,isInteger:u.isInteger,isString:u.isString,isObject:a,isHashObject:function(t){return a(t)&&-1!==t.constructor.toString().indexOf("function Object")},
+isPromise:function(t){return a(t)&&t.then},isNaN:u.isNaN,isAbsent:u.isAbsent,isExistent:u.isExistent,isSameType:u.isSameType,isArray:l,isFunction:i,parseBool:u.parseBool,deepEquals:o,notNull:function(t){return null!==t},notUndefined:function(t){return void 0!==t},isEven:function(t){return t%2==0},declareClassAsPureInterface:function(t,e){for(var n in t.prototype)"function"==typeof t.prototype[n]&&t.prototype.hasOwnProperty(n)&&(t.prototype[n]=function(){throw new Error(e+"::"+n+" is an interface member declaration and must be overloaded in order to be called")})},requireFullInterfaceImplementation:function(t,e,n,r){for(var s in n.prototype)if("function"==typeof n.prototype[s]&&!t.prototype[s])throw new Error("Interface implementation assertion failed: "+e+" does not implement "+r+"::"+s+" function")}})},53:()=>{},111:t=>{t.exports={isRtl:()=>!1}}},e={};function n(r){var s=e[r];if(void 0!==s)return s.exports;var i=e[r]={id:r,loaded:!1,exports:{}};return t[r].call(i.exports,i,i.exports,n),i.loaded=!0,i.exports}n.d=(t,e)=>{for(var r in e)n.o(e,r)&&!n.o(t,r)&&Object.defineProperty(t,r,{enumerable:!0,get:e[r]})},n.o=(t,e)=>Object.prototype.hasOwnProperty.call(t,e),n.r=t=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.nmd=t=>(t.paths=[],t.children||(t.children=[]),t),(()=>{const{miniCssF:t}=n;n.miniCssF=e=>self.document&&"rtl"===self.document.dir?t(e).replace(/\.css$/,".rtl.css"):t(e)})(),(()=>{"use strict";var t=n(151),e=n(53);class r{constructor(t){this._invalid=!1,this._name=t;let n=e.tzData[t];!n&&g&&(n=g.instance().getTimezoneData(t)),n||(n={time:[],offset:[]},this._invalid=!0),n.time.length!==n.offset.length&&(n={time:[],offset:[]},this._invalid=!0);const r=n;if(!r.time_utc){const t=n.time,e=n.offset,s=t.length,i=new Array(s);for(let n=0;n<s;n++)t[n]*=1e3,e[n]*=1e3,i[n]=t[n]-e[n];r.time_utc=i}this.tz=r}offset_utc(t){return r.offset(this.tz.time_utc,this.tz.offset,t)}offset_loc(t){return r.offset(this.tz.time,this.tz.offset,t)}name(){return this._name}is_valid(){return!this._invalid}correction_loc(t){const e=this.tz.time,n=this.tz.offset,r=m(e,t);if(r<1)return 0;const s=n[r]-n[r-1];if(s>0){if(t-e[r-1]<=s)return s}return 0}static offset(t,e,n){const r=m(t,n);return-1===r?0:e[r]}}const s=1440;function i(t){return t.getUTCFullYear()}function o(t){return t.getUTCMonth()}function a(t){return t.getUTCHours()}function c(t){return t.getUTCMinutes()}function u(t){return t.getUTCDate()}function l(t){return t.getUTCDay()+1}function h(t){return function(t){return 60*a(t)+c(t)}(t)}function f(t,e){t.setTime(t.getTime()+864e5*e)}function d(t){return new Date(t.getTime())}function y(t){return t%4==0&&(t%100!=0||t%400==0)}function p(t){return new r(t)}let g;function m(t,e){const n=t.length;if(0===n)return-1;if(isNaN(e))throw Error("Key is NaN");let r=0,s=n-1,i=_((r+s)/2);for(;;){if(t[i]>e){if(s=i-1,s<r)return i}else if(r=i+1,s<r)return i<n-1?i+1:-1;i=_((r+s)/2)}}function _(t){return 0|t}function w(t){return b(t,2)}
+function b(t,e=2){const n=t.toString();return"0".repeat(Math.max(0,e-n.length))+n}class E{constructor(t,e,n){this.year=t,this.month=e,this.day=n}toString(){return`${b(this.year,4)}-${w(this.month)}-${w(this.day)}`}toyyyymmdd(){return`${b(this.year,4)}${w(this.month)}${w(this.day)}`}compareTo(t){return this.year>t.year||this.year===t.year&&this.month>t.month||this.year===t.year&&this.month===t.month&&this.day>t.day?1:this.year===t.year&&this.month===t.month&&this.day===t.day?0:-1}before(t){return-1===this.compareTo(t)}toCalendar(t){return function(t,e,n,r,s,i,o){const a=new Date(Date.UTC(e,n,r,s||0,i||0,o||0)),c=t.offset_utc(+a);return new Date(a.valueOf()-c)}(t??p("Etc/UTC"),this.year,this.month-1,this.day)}addDays(t){const e=this.toCalendar(p("Etc/UTC"));return f(e,t),E.fromCalendar(e)}firstDayOfYear(){return new E(this.year,1,1)}getDayOfWeek(){return l(this.toCalendar())}static fromCalendar(t){return new E(i(t),o(t)+1,u(t))}}var S;function D(t,e){return t.compareTo(e)}!function(t){t[t.LeftFirst=-1]="LeftFirst",t[t.Unchanged=0]="Unchanged",t[t.RightFirst=1]="RightFirst"}(S||(S={}));class O{constructor(e,n,r){(0,t.assert)(Number.isFinite(e)&&Number.isFinite(n)&&Number.isFinite(r),"Invalid arguments"),this._dayOfWeek=e,this._start=n,this._length=r}start(){return this._start+s*this.sessionStartDaysOffset()}startOffset(){return this._start}sessionStartDaysOffset(){return this._start>=0?0:this._start%s==0?-Math.ceil(this._start/s):-Math.floor(this._start/s)}isOvernight(){return this._start<0}dayOfWeek(){return this._dayOfWeek}sessionStartDayOfWeek(){let t=this._dayOfWeek-this.sessionStartDaysOffset();return t<1&&(t+=7),t}length(){return this._length}compareTo(t){const e=this._weight(),n=e+this._length,r=t._weight(),s=r+t._length;return e<=r&&r<n||r<=e&&e<s?0:e>r?1:-1}contains(t){return this._contains(h(t),l(t))}_weight(){return this._dayOfWeek*s+this._start}_contains(t,e){let n=e-this._dayOfWeek;n>0&&(n-=7);const r=n*s+t;return r>=this._start&&r<this._start+this._length}}class T{constructor(t,e,n,r){this._maxTradingDayLength=null,this._list=t,this._entriesByDay=e,this._firstDayOfWeek=n,this._weekEndsCount=r}firstDayOfWeek(){return this._firstDayOfWeek}entriesByDay(){return this._entriesByDay}list(){return this._list}isWeekEnd(t){return!this._entriesByDay.has(t)}weekEndsCount(){return this._weekEndsCount}longestSessionLength(){return 0===this._list.length?0:Math.max(...this._list.map((t=>t.length())))}maxTradingDayLength(){if(null==this._maxTradingDayLength){const t=new Map;for(const e of this._list){const n=e.dayOfWeek();t.set(n,e.length()+(t.get(n)??0))}let e=0;t.forEach((t=>{e=Math.max(e,t)})),this._maxTradingDayLength=e}return this._maxTradingDayLength}}class C{constructor(t,e,n){this._startDay=t,this._entries=n,this._specEndDay=e}getEntries(){return this._entries}getStartDay(){return this._startDay}getSpecEndDay(){return this._specEndDay}isOpenEnded(){return null==this._specEndDay}}const N=[2,3,4,5,6],v=[1,2,3,4,5,6,7];function A(t){return t>=48&&t<=57}const k=[0,31,28,31,30,31,30,31,31,30,31,30,31]
+;class $ extends Map{constructor(){super(...arguments),this._keyStringsToKey=new Map}get(t){const e=this._keyStringsToKey.get(t.toString());return e&&super.get(e)}set(t,e){const n=t.toString(),r=this._keyStringsToKey.get(n);return void 0!==r&&super.delete(r),this._keyStringsToKey.set(n,t),super.set(t,e)}has(t){return this._keyStringsToKey.has(t.toString())}}function x(t){return t.length>0}class I{constructor(){this.historyEntries=[],this.timezone="",this.adjustSessionsIndexes=null}parseSessions(t,e){this._parseHistoryEntries(t,e,!1)}parseSessionsAndValidateDateTime(t,e){this._parseHistoryEntries(t,e,!0)}static parseHolidaysAndCorrections(t,e,n,r){return this._parseHolidaysAndCorrectionsImpl(t,e,n,r)}static parseHolidaysAndCorrectionsAndValidateDateTime(t,e,n){return this._parseHolidaysAndCorrectionsImpl(t,e,n,!0)}_clearAll(){this.timezone="",this.historyEntries=[],this.adjustSessionsIndexes=[]}_parseHistoryEntries(t,e,n){this._clearAll();const r=e.split("/");let s=null,i=null;this.hasHistoryCorrections=r.length>1;for(let e=0;e<r.length;e++){const o=r[e].split("#");let a=null;if(e!==r.length-1){if(2!==o.length)throw new Error(`bad session history entry definition: ${r[e]}`);a=I._parseDay(o[1],"session history entry end",n).toCalendar()}else{if(1!==o.length)throw new Error(`bad session history entry definition: ${r[e]}`);a=null}if(null!==i&&null!==a&&a.getTime()<i.getTime())throw new Error(`history sessions are not listed in ascending order (${i} -> ${a}`);const c=this._parseSessionsImpl(t,o[0],n);s=this._adjustStartToPreviousSession(c.firstDayOfWeek());const u=new C(s,a,c);this.historyEntries.push(u),i=a}}_parseSessionsImpl(t,e,n){this.timezone=t,e=this._parseFirstDayOfWeek(e);const r=new Map,s=[];if("24x7"===e.toLowerCase())for(const t of v){const e=I._createSessionEntry(t,0,0,0,0);s.push(e);const n=[];n.push(e),r.set(t,n)}else{let t=!1;const i=new Map;for(const n of e.split("|")){const e=n.split(":").filter(x);if(1!==e.length&&2!==e.length)throw new Error(`bad session section: ${n}`);const r=1===e.length;if(r){if(t)throw new Error(`duplicated default section: ${n}`);t=!0}const s=r?N:I._parseWorkingDays(e[1]);for(const t of s)r&&i.has(t)||i.set(t,e[0])}for(const t of v){const e=i.get(t);if(void 0!==e)for(const i of e.split(",").filter(x)){const e=I._parseSessionEntry(t,i,n);let o=r.get(t);void 0===o&&(o=[]),o.push(e),s.push(e),r.set(t,o)}}}s.sort(D);const i=new Set;for(const t of s)i.add(t.dayOfWeek());const o=7-i.size;return new T(s,r,this._firstDayOfWeek,o)}_parseFirstDayOfWeek(t){const e=t.split(";");if(this._firstDayOfWeek=2,e.length>2)throw new Error(`bad sessions spec: ${t}`);if(1===e.length)return t;let n=1;let r=e[0].indexOf("-")>=0?NaN:parseInt(e[0]);if(isNaN(r)&&(n=0,r=parseInt(e[1])),r<1||r>7)throw new Error(`bad sessions spec: ${t}`);return this._firstDayOfWeek=r,e[n]}_adjustStartToPreviousSession(e){if(0===this.historyEntries.length)return null;const n=(0,t.ensureNotNull)(this.historyEntries[this.historyEntries.length-1].getSpecEndDay()),r=e-l(n);if(0===r)return n;const s=d(n);return f(s,r),
+n.getTime()<s.getTime()||f(s,7),s}static _parseSessionEntry(t,e,n){const r=e.split("-");if(2!==r.length)throw new Error(`bad session entry: ${e}`);let s=0,i=r[0];if(i.includes("F")){const t=i.split("F");i=t[0],s=""!==t[1]?parseInt(t[1]):1}let o=0,a=r[1];if(a.includes("F")){const t=a.split("F");a=t[0],o=""!==t[1]?parseInt(t[1]):1}const c=this._minutesFromHHMM(i,e,n),u=this._minutesFromHHMM(a,e,n);return this._createSessionEntry(t,c,u,s,o)}static _minutesFromHHMM(t,e,n){if(4===t.length&&A(t.charCodeAt(0))&&A(t.charCodeAt(1))&&A(t.charCodeAt(2))&&A(t.charCodeAt(3))){const e=parseInt(t),r=Math.trunc(e/100),s=e%100;if(!n||r<24&&s<60)return s+60*r}throw new Error(`incorrect entry syntax: ${e}`)}static _parseDay(t,e,n){if(8===t.length&&A(t.charCodeAt(0))&&A(t.charCodeAt(1))&&A(t.charCodeAt(2))&&A(t.charCodeAt(3))&&A(t.charCodeAt(4))&&A(t.charCodeAt(5))&&A(t.charCodeAt(6))&&A(t.charCodeAt(7))){const e=parseInt(t.substring(0,4)),r=parseInt(t.substring(4,6)),s=parseInt(t.substring(6,8));if(!n||this._isValidDayOfMonth(s,r,e))return new E(e,r,s)}throw new Error(`bad ${e} date: ${t}`)}static _isValidDayOfMonth(t,e,n){return!(e<1||e>12)&&(!(t<1||t>k[e])||!(2!==e||29!==t||!y(n)))}static _parseWorkingDays(t){const e=[];for(let n=0;n<t.length;n++){const r=t.charCodeAt(n)-48;if(r<1||r>7)throw new Error(`Invalid days specification: ${t}`);e.includes(r)||e.push(r)}return e}static _createSessionEntry(e,n,r,i,o){(0,t.assert)(i>=0&&i<7),(0,t.assert)(o>=0&&o<7),0===r&&(r=s),i===o&&r<=n&&(i+=1),(0,t.assert)(i>=o),i>0&&(n-=i*s),o>0&&(r-=o*s);const a=r-n;return(0,t.assert)(e>=1&&e<=7),(0,t.assert)(n<s),(0,t.assert)(a>0),new O(e,n,a)}static _parseHolidaysAndCorrectionsImpl(t,e,n,r){const s=new $;if(""!==e){const t=[];for(const n of e.split(",")){const e=this._parseDay(n,"holiday",r);s.set(e,t)}}if(""===n)return s;for(const t of n.split(";")){const e=t.split(":");if(2!==e.length)throw new Error(`bad correction section: ${t}`);const n=[];if("dayoff"!==e[0])for(const t of e[0].split(","))n.push(this._parseSessionEntry(1,t,r));for(const t of e[1].split(",")){const e=this._parseDay(t,"correction",r),i=l(e.toCalendar()),o=[];for(let t=0;t<n.length;t++){const e=n[t];o.push(new O(i,e.startOffset(),e.length()))}s.set(e,o)}}return s}}var j=n(643);function F(t,e){if(!(0,j.isNumber)(t))return"n/a";if(!(0,j.isInteger)(e))throw new TypeError("invalid length");if(e<0||e>24)throw new TypeError("invalid length");if(0===e)return t.toString();return("0000000000000000"+t.toString()).slice(-e)}var W=n(111);function M(t){for(;t>s;)t-=s;const e=t%60,n=F((t-e)/60,2)+":"+F(e,2);return(0,W.isRtl)()?(0,W.startWithLTR)(n):n}const H=new I,z=[2,3,4,5,6,7,1],L=z.reduce(((t,e)=>(t[e<7?e+1:1]=new Date(2018,0,e).toLocaleString(window.navigator.language,{weekday:"short"}),t)),{}),U=document.querySelector("#result"),P=document.querySelector("#session");function V(t){if(null===U)return;try{H.parseSessions("Etc/UTC",t)}catch(t){return void(U.textContent=t.message)}const e=function(t,e,n){const{weekDays:r,closed:s}=n;return e.map((e=>{
+const n=t.filter((t=>t.dayOfWeek()===e)),i=`${r[e]} `;if(0===n.length)return`${i}${s}`;const o=n.map((t=>{const e=t.sessionStartDayOfWeek(),n=t.sessionStartDaysOffset(),s=function(t,e){let n=t+e;for(;n>7;)n-=7;return n}(e,n===t.sessionStartDaysOffset()+t.length()?0:n),i=e!==t.dayOfWeek()||s!==t.dayOfWeek(),o=i?r[e]:"",a=i?r[s]:"";return`${M(t.start())}${o}-${M(t.start()+t.length())}${a}`}));return`${i}${o.join(", ")}`}))}(H.historyEntries[0].getEntries().list(),z,{weekDays:L,closed:"Closed"});U.innerHTML="",U.appendChild(function(t){const e=document.createElement("table"),n=document.createElement("tbody");for(const e of t){const t=document.createElement("tr"),r=document.createElement("td");r.textContent=e,t.appendChild(r),n.appendChild(t)}return e.appendChild(n),e}(e))}P?.addEventListener("input",(()=>{V(P.value)})),V(P?.value||"")})()})();</script></body></html>
