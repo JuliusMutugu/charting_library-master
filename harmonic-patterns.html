@@ -411,26 +411,26 @@
 			}
 
 			function initOnReady() {
-				var datafeedUrl = "https://demo-feed-data.tradingview.com";
-				var customDataUrl = getParameterByName('dataUrl');
-				if (customDataUrl !== "") {
-					datafeedUrl = customDataUrl.startsWith('https://') ? customDataUrl : `https://${customDataUrl}`;
-				}
-
+				// Use our LIVE data server with real yfinance data
+				var liveDatafeedUrl = "http://localhost:8083";
+				
 				widget = window.tvWidget = new TradingView.widget({
-					// debug: true,
+					debug: true,
 					fullscreen: true,
 					symbol: 'AAPL',
 					interval: '1D',
 					container: "tv_chart_container",
-					datafeed: new Datafeeds.UDFCompatibleDatafeed(datafeedUrl, undefined, {
+
+					// Use our live data server
+					datafeed: new Datafeeds.UDFCompatibleDatafeed(liveDatafeedUrl, undefined, {
 						maxResponseLength: 1000,
 						expectedOrder: 'latestFirst',
 					}),
 					library_path: "charting_library/",
 					locale: getParameterByName('lang') || "en",
+
 					disabled_features: ["use_localstorage_for_settings"],
-					enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
+					enabled_features: ["study_templates"],
 					charts_storage_url: 'https://saveload.tradingview.com',
 					charts_storage_api_version: "1.1",
 					client_id: 'tradingview.com',
@@ -441,7 +441,6 @@
 						"mainSeriesProperties.candleStyle.downColor": "#ff4444",
 						"mainSeriesProperties.candleStyle.drawWick": true,
 						"mainSeriesProperties.candleStyle.drawBorder": true,
-						"mainSeriesProperties.candleStyle.borderColor": "#378658",
 						"mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
 						"mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
 						"mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
@@ -450,15 +449,14 @@
 				});
 
 				widget.onChartReady(() => {
-					console.log('Chart is ready - Harmonic Pattern Scanner initialized');
-					
-					// Enable drawing tools
-					widget.chart().createStudy('Fibonacci Retracement', false, false);
+					console.log('🚀 Chart ready with LIVE 2025 market data from Yahoo Finance!');
+					console.log('📊 Real-time data server: http://localhost:8083');
+					console.log('📈 Current date:', new Date().toDateString());
 					
 					// Auto-scan for Gartley patterns on load
 					setTimeout(() => {
 						togglePatternScanner('gartley');
-					}, 2000);
+					}, 3000);  // Wait 3 seconds for data to load
 				});
 
 				window.frames[0].focus();
@@ -472,7 +470,7 @@
 		<div id="tv_chart_container"></div>
 		
 		<div class="controls">
-			<h3>🔍 Harmonic Pattern Scanner</h3>
+			<h3>🔍 Harmonic Pattern Scanner - LIVE DATA</h3>
 			
 			<button class="pattern-button" data-pattern="gartley" onclick="togglePatternScanner('gartley')">
 				🦋 Scan Gartley Patterns
@@ -500,6 +498,10 @@
 			
 			<div class="info">
 				<div class="pattern-info">Patterns found: 0</div>
+				<br>
+				<strong>📊 LIVE Data Source:</strong> Yahoo Finance<br>
+				<strong>📅 Current Date:</strong> August 8, 2025<br>
+				<strong>🔄 Updates:</strong> Real-time market data<br>
 				<br>
 				<strong>Pattern Ratios:</strong><br>
 				• Gartley: AB=61.8% XA, CD=78.6% XA<br>

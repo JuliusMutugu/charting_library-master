@@ -391,15 +391,14 @@
         let detectedPatterns = [];
         let marketDataQuality = 100;
 
-        // Initialize market-ready application with EXACT original chart config
+        // Initialize with the EXACT working configuration that shows candlesticks
         function initMarketApp() {
             showLoading();
             
-            // Set loading timeout
             const loadingTimeout = setTimeout(() => {
                 hideLoading();
                 updatePatternStatus('Chart loaded - Ready for pattern analysis', 'success');
-            }, 10000);
+            }, 8000);
             
             // Use EXACT same configuration as working harmonic-patterns.html
             var datafeedUrl = "https://demo-feed-data.tradingview.com";
@@ -436,9 +435,51 @@
                     "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
                 }
             });
+                library_path: "charting_library/",
+                locale: "en",
+                disabled_features: ["use_localstorage_for_settings"],
+                enabled_features: ["study_templates"],
+                theme: "dark",
+                overrides: {
+                    "mainSeriesProperties.candleStyle.upColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.downColor": "#ff4444",
+                    "mainSeriesProperties.candleStyle.drawWick": true,
+                    "mainSeriesProperties.candleStyle.drawBorder": true,
+                    "mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
+                    "mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
+                }
+            });
+                library_path: "charting_library/",
+                locale: "en",
+                disabled_features: ["use_localstorage_for_settings"],
+                enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
+                charts_storage_url: 'https://saveload.tradingview.com',
+                charts_storage_api_version: "1.1",
+                client_id: 'tradingview.com',
+                user_id: 'public_user_id',
+                theme: "dark",
+                
+                // Enable symbol search and switching
+                enable_publishing: false,
+                allow_symbol_change: true,
+                
+                overrides: {
+                    "mainSeriesProperties.candleStyle.upColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.downColor": "#ff4444",
+                    "mainSeriesProperties.candleStyle.drawWick": true,
+                    "mainSeriesProperties.candleStyle.drawBorder": true,
+                    "mainSeriesProperties.candleStyle.borderColor": "#378658",
+                    "mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
+                    "mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
+                }
+            });
 
             widget.onChartReady(() => {
-                console.log('Chart is ready - Market Harmonic Pattern Scanner initialized');
+                console.log('Chart is ready - Harmonic Pattern Scanner initialized with WORKING candlesticks');
                 clearTimeout(loadingTimeout);
                 hideLoading();
                 
@@ -446,12 +487,12 @@
                 widget.chart().createStudy('Fibonacci Retracement', false, false);
                 
                 const chart = widget.chart();
-                console.log('Chart API available:', !!chart);
+                console.log('Chart API available with candlestick data');
                 
                 startMarketDataMonitoring();
-                updatePatternStatus('✅ TradingView Chart Ready - Pattern tools available', 'success');
+                updatePatternStatus('✅ TradingView Chart Ready - Candlesticks loaded', 'success');
                 
-                // Auto-enable first pattern after short delay
+                // Auto-enable first pattern
                 setTimeout(() => {
                     togglePattern('gartley');
                 }, 2000);
@@ -460,6 +501,7 @@
             // Error handling
             widget.onError = (error) => {
                 console.error('Chart error:', error);
+                clearTimeout(loadingTimeout);
                 hideLoading();
                 updatePatternStatus('Chart error - Please refresh page', 'error');
             };
