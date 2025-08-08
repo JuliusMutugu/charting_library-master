@@ -14,7 +14,7 @@
 		body {
 			margin: 0px;
 			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-			background: #131722;
+			background: #ffffff;
 		}
 
 		#tv_chart_container {
@@ -28,101 +28,154 @@
 			position: fixed;
 			top: 10px;
 			right: 10px;
-			background: rgba(255, 255, 255, 0.95);
-			padding: 20px;
+			background: rgba(255, 255, 255, 0.98);
+			padding: 16px;
 			border-radius: 8px;
-			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 			z-index: 10000;
 			width: 280px;
+			max-width: 280px;
 			backdrop-filter: blur(10px);
 			-webkit-backdrop-filter: blur(10px);
+			border: 1px solid rgba(255, 255, 255, 0.3);
 			display: block !important;
 			visibility: visible !important;
 			opacity: 1 !important;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 		}
 
 		.controls h3 {
-			margin: 0 0 15px 0;
-			color: #2c3e50;
+			margin: 0 0 14px 0;
+			color: #1a1a1a;
 			font-size: 16px;
 			font-weight: 600;
 			text-align: center;
-			border-bottom: 2px solid #ecf0f1;
+			border-bottom: 1px solid #e0e0e0;
 			padding-bottom: 10px;
+			letter-spacing: 0.3px;
 		}
 
 		.pattern-button {
 			display: block;
 			width: 100%;
-			margin: 8px 0;
-			padding: 12px 16px;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			margin: 4px 0;
+			padding: 10px 16px;
+			background: #4285f4;
 			color: white;
 			border: none;
 			border-radius: 6px;
 			cursor: pointer;
 			font-size: 13px;
 			font-weight: 500;
-			transition: all 0.3s ease;
-			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+			transition: all 0.2s ease;
+			box-shadow: 0 1px 4px rgba(66, 133, 244, 0.3);
+			text-align: center;
+			letter-spacing: 0.2px;
+			line-height: 1.4;
 		}
 
 		.pattern-button:hover {
 			transform: translateY(-1px);
-			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+			box-shadow: 0 3px 8px rgba(66, 133, 244, 0.4);
+			background: #3367d6;
 		}
 
 		.pattern-button.active {
-			background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-			box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+			background: #34a853;
+			box-shadow: 0 2px 6px rgba(52, 168, 83, 0.4);
 		}
 
-		.pattern-button:nth-child(2) {
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		.pattern-button.active:hover {
+			background: #2d8f47;
+			box-shadow: 0 3px 8px rgba(52, 168, 83, 0.5);
 		}
 
-		.pattern-button:nth-child(3) {
-			background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+		/* Individual button colors matching the interface */
+		.pattern-button[data-pattern="gartley"] {
+			background: #34a853;
+			box-shadow: 0 1px 4px rgba(52, 168, 83, 0.3);
 		}
 
-		.pattern-button:nth-child(4) {
-			background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+		.pattern-button[data-pattern="gartley"]:hover {
+			background: #2d8f47;
+			box-shadow: 0 3px 8px rgba(52, 168, 83, 0.4);
 		}
 
-		.pattern-button:nth-child(5) {
-			background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+		.pattern-button[data-pattern="butterfly"] {
+			background: #4285f4;
+			box-shadow: 0 1px 4px rgba(66, 133, 244, 0.3);
 		}
 
-		.pattern-button:nth-child(6) {
-			background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+		.pattern-button[data-pattern="butterfly"]:hover {
+			background: #3367d6;
+			box-shadow: 0 3px 8px rgba(66, 133, 244, 0.4);
+		}
+
+		.pattern-button[data-pattern="bat"] {
+			background: #4285f4;
+			box-shadow: 0 1px 4px rgba(66, 133, 244, 0.3);
+		}
+
+		.pattern-button[data-pattern="bat"]:hover {
+			background: #3367d6;
+			box-shadow: 0 3px 8px rgba(66, 133, 244, 0.4);
+		}
+
+		.pattern-button[data-pattern="crab"] {
+			background: #4285f4;
+			box-shadow: 0 1px 4px rgba(66, 133, 244, 0.3);
+		}
+
+		.pattern-button[data-pattern="crab"]:hover {
+			background: #3367d6;
+			box-shadow: 0 3px 8px rgba(66, 133, 244, 0.4);
+		}
+
+		.pattern-button[data-pattern="shark"] {
+			background: #4285f4;
+			box-shadow: 0 1px 4px rgba(66, 133, 244, 0.3);
+		}
+
+		.pattern-button[data-pattern="shark"]:hover {
+			background: #3367d6;
+			box-shadow: 0 3px 8px rgba(66, 133, 244, 0.4);
 		}
 
 		.clear-button {
-			background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
-			margin-top: 15px;
+			background: #ea4335 !important;
+			box-shadow: 0 1px 4px rgba(234, 67, 53, 0.3) !important;
+			margin-top: 12px;
 		}
 
 		.clear-button:hover {
-			background: linear-gradient(135deg, #ee5a52 0%, #d63447 100%) !important;
+			background: #d23b20 !important;
+			box-shadow: 0 3px 8px rgba(234, 67, 53, 0.4) !important;
 		}
 
 		.info {
-			font-size: 12px;
-			color: #5a6c7d;
-			margin-top: 15px;
+			font-size: 11px;
+			color: #5f6368;
+			margin-top: 12px;
 			line-height: 1.4;
-			border-top: 1px solid #ecf0f1;
+			border-top: 1px solid #e0e0e0;
 			padding-top: 12px;
+			background: rgba(248, 249, 250, 0.6);
+			padding: 12px 10px 10px 10px;
+			border-radius: 6px;
+			margin-left: -4px;
+			margin-right: -4px;
 		}
 
 		.pattern-info {
 			font-weight: 600;
-			color: #2c3e50;
+			color: #1a1a1a;
 			margin-bottom: 8px;
+			font-size: 12px;
 		}
 
 		.info strong {
-			color: #34495e;
+			color: #1a1a1a;
+			font-size: 11px;
 		}
 	</style>
 
@@ -528,26 +581,32 @@
 				library_path: "charting_library/",
 				locale: getParameterByName('lang') || "en",
 
-				// SPEED OPTIMIZATIONS
+				// SPEED OPTIMIZATIONS - Keep essential trading features
 				disabled_features: [
 					"use_localstorage_for_settings",
-					"left_toolbar",
-					"header_widget",
-					"timeframes_toolbar",
 					"edit_buttons_in_legend",
 					"context_menus",
-					"control_bar",
 					"border_around_the_chart"
 				],
 				enabled_features: [
 					"study_templates",
-					"hide_last_na_study_output"
+					"hide_last_na_study_output",
+					"header_symbol_search",
+					"symbol_search_hot_key",
+					"header_interval_dialog_button",
+					"header_chart_type",
+					"header_settings",
+					"header_indicators",
+					"header_compare",
+					"header_undo_redo",
+					"header_screenshot",
+					"timeframes_toolbar"
 				],
 
 				// Simplified for speed
-				loading_screen: { backgroundColor: "#131722" },
+				loading_screen: { backgroundColor: "#ffffff" },
 
-				theme: getParameterByName('theme') || "dark",
+				theme: getParameterByName('theme') || "light",
 				overrides: {
 					"mainSeriesProperties.candleStyle.upColor": "#26a69a",
 					"mainSeriesProperties.candleStyle.downColor": "#ef5350",
@@ -558,16 +617,27 @@
 					"mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
 					"mainSeriesProperties.candleStyle.wickDownColor": "#ef5350",
 
-					// Speed optimizations
-					"paneProperties.background": "#131722",
-					"paneProperties.vertGridProperties.color": "#363c4e",
-					"paneProperties.horzGridProperties.color": "#363c4e",
+					// Light theme optimizations
+					"paneProperties.background": "#ffffff",
+					"paneProperties.vertGridProperties.color": "#e1e3e6",
+					"paneProperties.horzGridProperties.color": "#e1e3e6",
 					"symbolWatermarkProperties.transparency": 90,
-					"scalesProperties.textColor": "#b2b5be",
+					"scalesProperties.textColor": "#131722",
+					"scalesProperties.backgroundColor": "#ffffff",
 				},
 
-				// Fast loading settings
-				time_frames: [],
+				// Fast loading settings with essential trading tools
+				time_frames: [
+					{ text: "1m", resolution: "1", description: "1 Minute" },
+					{ text: "5m", resolution: "5", description: "5 Minutes" },
+					{ text: "15m", resolution: "15", description: "15 Minutes" },
+					{ text: "30m", resolution: "30", description: "30 Minutes" },
+					{ text: "1h", resolution: "60", description: "1 Hour" },
+					{ text: "4h", resolution: "240", description: "4 Hours" },
+					{ text: "1D", resolution: "1D", description: "1 Day" },
+					{ text: "1W", resolution: "1W", description: "1 Week" },
+					{ text: "1M", resolution: "1M", description: "1 Month" }
+				],
 				charts_storage_url: null, // Disable cloud storage for speed
 				client_id: null,
 				user_id: null
