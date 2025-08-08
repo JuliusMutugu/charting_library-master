@@ -1,0 +1,807 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>TradingView Advanced Charts - Professional Harmonic Pattern Scanner</title>
+		
+		<!-- Fix for iOS Safari zooming bug -->
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+		
+		<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
+		<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
+		<script type="text/javascript" src="harmonic-pattern-detector.js"></script>
+		
+		<style>
+			body {
+				margin: 0px;
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background: #131722;
+				color: #d1d4dc;
+			}
+			
+			.scanner-panel {
+				position: fixed;
+				top: 10px;
+				right: 10px;
+				background: rgba(19, 23, 34, 0.95);
+				border: 1px solid #2a2e39;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+				z-index: 1000;
+				max-width: 350px;
+				max-height: 80vh;
+				overflow-y: auto;
+			}
+			
+			.scanner-header {
+				display: flex;
+				align-items: center;
+				margin-bottom: 15px;
+				padding-bottom: 10px;
+				border-bottom: 1px solid #2a2e39;
+			}
+			
+			.scanner-title {
+				margin: 0;
+				color: #ffffff;
+				font-size: 16px;
+				font-weight: 600;
+			}
+			
+			.scanner-status {
+				margin-left: auto;
+				padding: 4px 8px;
+				border-radius: 12px;
+				font-size: 11px;
+				font-weight: 500;
+			}
+			
+			.status-active { background: #4caf50; color: white; }
+			.status-inactive { background: #757575; color: white; }
+			
+			.pattern-controls {
+				margin-bottom: 20px;
+			}
+			
+			.pattern-group {
+				margin-bottom: 15px;
+			}
+			
+			.pattern-group-title {
+				font-size: 12px;
+				color: #9598a1;
+				margin-bottom: 8px;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+			
+			.pattern-button {
+				display: flex;
+				align-items: center;
+				width: 100%;
+				margin: 4px 0;
+				padding: 10px 12px;
+				background: #2a2e39;
+				color: #d1d4dc;
+				border: 1px solid #434651;
+				border-radius: 6px;
+				cursor: pointer;
+				font-size: 13px;
+				transition: all 0.2s ease;
+				position: relative;
+			}
+			
+			.pattern-button:hover {
+				background: #363a45;
+				border-color: #5a5f6b;
+			}
+			
+			.pattern-button.active {
+				background: #1976d2;
+				border-color: #1976d2;
+				color: white;
+			}
+			
+			.pattern-button.scanning {
+				animation: pulse 1.5s infinite;
+			}
+			
+			@keyframes pulse {
+				0% { opacity: 1; }
+				50% { opacity: 0.7; }
+				100% { opacity: 1; }
+			}
+			
+			.pattern-icon {
+				margin-right: 8px;
+			}
+			
+			.pattern-count {
+				margin-left: auto;
+				background: #4caf50;
+				color: white;
+				padding: 2px 6px;
+				border-radius: 10px;
+				font-size: 11px;
+				min-width: 16px;
+				text-align: center;
+			}
+			
+			.control-button {
+				width: 100%;
+				padding: 12px;
+				margin: 8px 0;
+				border: none;
+				border-radius: 6px;
+				cursor: pointer;
+				font-size: 13px;
+				font-weight: 500;
+				transition: all 0.2s ease;
+			}
+			
+			.clear-btn {
+				background: #f44336;
+				color: white;
+			}
+			
+			.clear-btn:hover {
+				background: #d32f2f;
+			}
+			
+			.auto-scan-btn {
+				background: #ff9800;
+				color: white;
+			}
+			
+			.auto-scan-btn:hover {
+				background: #f57c00;
+			}
+			
+			.auto-scan-btn.active {
+				background: #4caf50;
+			}
+			
+			.results-section {
+				margin-top: 20px;
+				padding-top: 15px;
+				border-top: 1px solid #2a2e39;
+			}
+			
+			.results-title {
+				font-size: 14px;
+				color: #ffffff;
+				margin-bottom: 10px;
+				font-weight: 600;
+			}
+			
+			.pattern-result {
+				background: #2a2e39;
+				border: 1px solid #434651;
+				border-radius: 6px;
+				padding: 12px;
+				margin: 8px 0;
+				font-size: 12px;
+			}
+			
+			.pattern-result-header {
+				display: flex;
+				align-items: center;
+				margin-bottom: 8px;
+			}
+			
+			.pattern-name {
+				font-weight: 600;
+				color: #ffffff;
+			}
+			
+			.pattern-direction {
+				margin-left: 8px;
+				padding: 2px 6px;
+				border-radius: 4px;
+				font-size: 10px;
+				font-weight: 500;
+			}
+			
+			.direction-bullish {
+				background: #4caf50;
+				color: white;
+			}
+			
+			.direction-bearish {
+				background: #f44336;
+				color: white;
+			}
+			
+			.pattern-confidence {
+				margin-left: auto;
+				color: #9598a1;
+			}
+			
+			.pattern-details {
+				color: #9598a1;
+				line-height: 1.4;
+			}
+			
+			.ratio-info {
+				margin-top: 6px;
+				font-size: 11px;
+				color: #757575;
+			}
+			
+			.settings-section {
+				margin-top: 15px;
+				padding-top: 15px;
+				border-top: 1px solid #2a2e39;
+			}
+			
+			.setting-item {
+				display: flex;
+				align-items: center;
+				margin: 8px 0;
+			}
+			
+			.setting-label {
+				flex: 1;
+				font-size: 12px;
+				color: #9598a1;
+			}
+			
+			.setting-input {
+				background: #2a2e39;
+				border: 1px solid #434651;
+				color: #d1d4dc;
+				padding: 4px 8px;
+				border-radius: 4px;
+				font-size: 12px;
+				width: 60px;
+			}
+			
+			.info-section {
+				margin-top: 15px;
+				padding: 12px;
+				background: rgba(33, 150, 243, 0.1);
+				border: 1px solid rgba(33, 150, 243, 0.3);
+				border-radius: 6px;
+				font-size: 11px;
+				color: #9598a1;
+				line-height: 1.4;
+			}
+		</style>
+
+		<script type="text/javascript">
+			let widget;
+			let patternDetector;
+			let currentPatterns = [];
+			let activeScans = new Set();
+			let autoScanEnabled = false;
+			let scanInterval;
+			let lastScanTime = 0;
+			
+			// Pattern configurations
+			const patternConfigs = {
+				classic: {
+					gartley: { name: "Gartley", icon: "🦋", priority: 1 },
+					bat: { name: "Bat", icon: "🦇", priority: 2 },
+					butterfly: { name: "Butterfly", icon: "🦋", priority: 3 },
+					crab: { name: "Crab", icon: "🦀", priority: 4 }
+				},
+				advanced: {
+					shark: { name: "Shark", icon: "🦈", priority: 5 },
+					cypher: { name: "Cypher", icon: "🔄", priority: 6 }
+				}
+			};
+			
+			// Settings
+			let settings = {
+				minSwingSize: 5,
+				tolerance: 0.05,
+				minConfidence: 70,
+				autoScanInterval: 30000, // 30 seconds
+				showRatios: true,
+				maxPatterns: 10
+			};
+
+			function getParameterByName(name) {
+				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+					results = regex.exec(location.search);
+				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+			}
+
+			function updateScannerStatus() {
+				const statusEl = document.querySelector('.scanner-status');
+				const isActive = activeScans.size > 0 || autoScanEnabled;
+				
+				statusEl.textContent = isActive ? 'ACTIVE' : 'INACTIVE';
+				statusEl.className = `scanner-status ${isActive ? 'status-active' : 'status-inactive'}`;
+			}
+
+			function updatePatternButton(patternType, count = 0, scanning = false) {
+				const button = document.querySelector(`[data-pattern="${patternType}"]`);
+				if (!button) return;
+				
+				const countEl = button.querySelector('.pattern-count');
+				if (countEl) {
+					countEl.textContent = count;
+					countEl.style.display = count > 0 ? 'block' : 'none';
+				}
+				
+				if (scanning) {
+					button.classList.add('scanning');
+				} else {
+					button.classList.remove('scanning');
+				}
+			}
+
+			function togglePatternScan(patternType) {
+				const button = document.querySelector(`[data-pattern="${patternType}"]`);
+				
+				if (activeScans.has(patternType)) {
+					activeScans.delete(patternType);
+					button.classList.remove('active');
+					updatePatternButton(patternType, 0, false);
+				} else {
+					activeScans.add(patternType);
+					button.classList.add('active');
+					scanForPattern(patternType);
+				}
+				
+				updateScannerStatus();
+			}
+
+			function scanForPattern(patternType) {
+				if (!widget || !widget.chart || !patternDetector) return;
+				
+				updatePatternButton(patternType, 0, true);
+				
+				widget.chart().getBars().then(bars => {
+					if (!bars || bars.length < 50) {
+						console.log('Insufficient data for pattern analysis');
+						updatePatternButton(patternType, 0, false);
+						return;
+					}
+
+					const patterns = patternDetector.findHarmonicPatterns(
+						patternDetector.detectSwingPoints(bars, settings.minSwingSize),
+						patternType
+					);
+					
+					// Filter by confidence
+					const validPatterns = patterns.filter(p => p.confidence >= settings.minConfidence);
+					
+					// Update current patterns
+					currentPatterns = currentPatterns.filter(p => p.type !== patternType);
+					currentPatterns.push(...validPatterns);
+					
+					// Draw patterns
+					clearPatternType(patternType);
+					validPatterns.slice(0, settings.maxPatterns).forEach(pattern => {
+						drawHarmonicPattern(pattern);
+					});
+					
+					updatePatternButton(patternType, validPatterns.length, false);
+					updateResultsDisplay();
+					
+					console.log(`Found ${validPatterns.length} ${patternType} patterns`);
+				}).catch(error => {
+					console.error(`Error scanning for ${patternType}:`, error);
+					updatePatternButton(patternType, 0, false);
+				});
+			}
+
+			function drawHarmonicPattern(pattern) {
+				if (!widget || !widget.chart()) return;
+
+				const chart = widget.chart();
+				const points = pattern.points;
+				
+				console.log('Drawing pattern:', pattern.name, 'with points:', points);
+				
+				try {
+					// Draw X-A-B-C-D lines using createMultipointShape
+					const shapePoints = points.map(point => ({
+						time: point.time,
+						price: point.price
+					}));
+
+					// Create the full XABCD pattern as connected lines
+					chart.createMultipointShape(shapePoints, {
+						shape: "path",
+						overrides: {
+							linecolor: pattern.color,
+							linewidth: 2,
+							linestyle: 0,
+							transparency: 0
+						},
+						zOrder: "top",
+						lock: false,
+						disableSelection: false,
+						disableSave: false,
+						disableUndo: false
+					}).then(shapeId => {
+						console.log('Pattern shape created:', shapeId);
+					}).catch(err => {
+						console.error('Error creating multipoint shape:', err);
+						
+						// Fallback: Draw individual trend lines
+						for (let i = 0; i < points.length - 1; i++) {
+							chart.createMultipointShape([
+								{ time: points[i].time, price: points[i].price },
+								{ time: points[i + 1].time, price: points[i + 1].price }
+							], {
+								shape: "trend_line",
+								overrides: {
+									linecolor: pattern.color,
+									linewidth: 2,
+									linestyle: 0,
+									transparency: 0
+								},
+								zOrder: "top"
+							}).then(lineId => {
+								console.log(`Line ${i} created:`, lineId);
+							}).catch(lineErr => {
+								console.error(`Error creating line ${i}:`, lineErr);
+							});
+						}
+					});
+
+					// Add pattern label at D point
+					const labelText = `${pattern.name} ${pattern.direction === 'bullish' ? '↗️' : '↘️'} ${pattern.confidence.toFixed(0)}%`;
+					
+					chart.createMultipointShape([{ time: points[4].time, price: points[4].price }], {
+						shape: "text",
+						text: labelText,
+						overrides: {
+							color: pattern.color,
+							fontsize: 12,
+							bold: true,
+							backgroundColor: pattern.color,
+							backgroundTransparency: 80,
+							borderColor: pattern.color
+						},
+						zOrder: "top"
+					}).then(textId => {
+						console.log('Pattern label created:', textId);
+					}).catch(textErr => {
+						console.error('Error creating pattern label:', textErr);
+					});
+
+					// Add point labels (X, A, B, C, D)
+					const pointLabels = ['X', 'A', 'B', 'C', 'D'];
+					points.forEach((point, index) => {
+						chart.createMultipointShape([{ time: point.time, price: point.price }], {
+							shape: "text",
+							text: pointLabels[index],
+							overrides: {
+								color: "#FFFFFF",
+								fontsize: 10,
+								bold: true,
+								backgroundColor: pattern.color,
+								backgroundTransparency: 20
+							},
+							zOrder: "top"
+						}).catch(err => {
+							console.log(`Could not create point label ${pointLabels[index]}:`, err);
+						});
+					});
+
+					// Add Fibonacci ratios if enabled
+					if (settings.showRatios) {
+						const ratioText = `AB/XA: ${pattern.ratios.AB_XA.toFixed(3)}\nBC/AB: ${pattern.ratios.BC_AB.toFixed(3)}\nCD/BC: ${pattern.ratios.CD_BC.toFixed(3)}\nAD/XA: ${pattern.ratios.AD_XA.toFixed(3)}`;
+
+						chart.createMultipointShape([{ time: points[2].time, price: points[2].price }], {
+							shape: "text",
+							text: ratioText,
+							overrides: {
+								color: pattern.color,
+								fontsize: 9,
+								backgroundColor: "#000000",
+								backgroundTransparency: 30
+							},
+							zOrder: "top"
+						}).catch(err => {
+							console.log('Could not create ratio text:', err);
+						});
+					}
+
+				} catch (error) {
+					console.error('Error drawing pattern:', error);
+				}
+			}
+
+			function clearPatternType(patternType) {
+				// This would ideally remove only shapes for this pattern type
+				// For now, we'll use a simple approach
+				if (widget && widget.chart) {
+					// Note: TradingView API doesn't provide easy way to remove specific shapes
+					// In a production environment, you'd want to track shape IDs
+				}
+			}
+
+			function clearAllPatterns() {
+				if (!widget || !widget.chart) return;
+				
+				try {
+					widget.chart().removeAllShapes();
+					currentPatterns = [];
+					activeScans.clear();
+					
+					// Reset all buttons
+					document.querySelectorAll('.pattern-button').forEach(btn => {
+						btn.classList.remove('active', 'scanning');
+						const countEl = btn.querySelector('.pattern-count');
+						if (countEl) countEl.style.display = 'none';
+					});
+					
+					updateResultsDisplay();
+					updateScannerStatus();
+				} catch (error) {
+					console.error('Error clearing patterns:', error);
+				}
+			}
+
+			function toggleAutoScan() {
+				autoScanEnabled = !autoScanEnabled;
+				const button = document.querySelector('.auto-scan-btn');
+				
+				if (autoScanEnabled) {
+					button.classList.add('active');
+					button.textContent = '⏸️ Stop Auto Scan';
+					startAutoScan();
+				} else {
+					button.classList.remove('active');
+					button.textContent = '▶️ Start Auto Scan';
+					stopAutoScan();
+				}
+				
+				updateScannerStatus();
+			}
+
+			function startAutoScan() {
+				if (scanInterval) clearInterval(scanInterval);
+				
+				scanInterval = setInterval(() => {
+					if (activeScans.size > 0) {
+						activeScans.forEach(patternType => {
+							scanForPattern(patternType);
+						});
+					}
+				}, settings.autoScanInterval);
+			}
+
+			function stopAutoScan() {
+				if (scanInterval) {
+					clearInterval(scanInterval);
+					scanInterval = null;
+				}
+			}
+
+			function updateResultsDisplay() {
+				const resultsContainer = document.querySelector('.results-container');
+				if (!resultsContainer) return;
+				
+				resultsContainer.innerHTML = '';
+				
+				if (currentPatterns.length === 0) {
+					resultsContainer.innerHTML = '<div style="color: #757575; text-align: center; padding: 20px;">No patterns detected</div>';
+					return;
+				}
+				
+				// Sort patterns by confidence
+				const sortedPatterns = [...currentPatterns].sort((a, b) => b.confidence - a.confidence);
+				
+				sortedPatterns.forEach(pattern => {
+					const patternEl = document.createElement('div');
+					patternEl.className = 'pattern-result';
+					
+					const reversalZones = patternDetector.getReversalZones(pattern);
+					
+					patternEl.innerHTML = `
+						<div class="pattern-result-header">
+							<span class="pattern-name">${pattern.name}</span>
+							<span class="pattern-direction direction-${pattern.direction}">${pattern.direction.toUpperCase()}</span>
+							<span class="pattern-confidence">${pattern.confidence.toFixed(1)}%</span>
+						</div>
+						<div class="pattern-details">
+							Entry: ${reversalZones.entry.toFixed(2)}<br>
+							Stop Loss: ${reversalZones.stopLoss.toFixed(2)}<br>
+							Target: ${reversalZones.target1.toFixed(2)}
+						</div>
+						${settings.showRatios ? `
+						<div class="ratio-info">
+							AB/XA: ${pattern.ratios.AB_XA.toFixed(3)} | BC/AB: ${pattern.ratios.BC_AB.toFixed(3)}<br>
+							CD/BC: ${pattern.ratios.CD_BC.toFixed(3)} | AD/XA: ${pattern.ratios.AD_XA.toFixed(3)}
+						</div>
+						` : ''}
+					`;
+					
+					resultsContainer.appendChild(patternEl);
+				});
+			}
+
+			function updateSettings() {
+				settings.minSwingSize = parseInt(document.querySelector('#minSwingSize').value) || 5;
+				settings.tolerance = parseFloat(document.querySelector('#tolerance').value) || 0.05;
+				settings.minConfidence = parseInt(document.querySelector('#minConfidence').value) || 70;
+				
+				// Update pattern detector
+				if (patternDetector) {
+					patternDetector.tolerance = settings.tolerance;
+					patternDetector.minSwingSize = settings.minSwingSize;
+				}
+			}
+
+			function initOnReady() {
+				var datafeedUrl = "https://demo-feed-data.tradingview.com";
+				var customDataUrl = getParameterByName('dataUrl');
+				if (customDataUrl !== "") {
+					datafeedUrl = customDataUrl.startsWith('https://') ? customDataUrl : `https://${customDataUrl}`;
+				}
+
+				widget = window.tvWidget = new TradingView.widget({
+					// debug: true,
+					fullscreen: true,
+					symbol: 'AAPL',
+					interval: '1D',
+					container: "tv_chart_container",
+					datafeed: new Datafeeds.UDFCompatibleDatafeed(datafeedUrl, undefined, {
+						maxResponseLength: 1000,
+						expectedOrder: 'latestFirst',
+					}),
+					library_path: "charting_library/",
+					locale: getParameterByName('lang') || "en",
+					disabled_features: ["use_localstorage_for_settings"],
+					enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
+					charts_storage_url: 'https://saveload.tradingview.com',
+					charts_storage_api_version: "1.1",
+					client_id: 'tradingview.com',
+					user_id: 'public_user_id',
+					theme: getParameterByName('theme') || 'dark',
+					custom_css_url: 'themed.css',
+					overrides: {
+						"paneProperties.background": "#131722",
+						"paneProperties.vertGridProperties.color": "#363c4e",
+						"paneProperties.horzGridProperties.color": "#363c4e",
+						"symbolWatermarkProperties.transparency": 90,
+						"scalesProperties.textColor": "#AAA",
+						"mainSeriesProperties.candleStyle.upColor": "#4CAF50",
+						"mainSeriesProperties.candleStyle.downColor": "#F44336",
+						"mainSeriesProperties.candleStyle.drawWick": true,
+						"mainSeriesProperties.candleStyle.drawBorder": true,
+						"mainSeriesProperties.candleStyle.borderUpColor": "#4CAF50",
+						"mainSeriesProperties.candleStyle.borderDownColor": "#F44336",
+						"mainSeriesProperties.candleStyle.wickUpColor": "#4CAF50",
+						"mainSeriesProperties.candleStyle.wickDownColor": "#F44336"
+					}
+				});
+
+				widget.onChartReady(() => {
+					console.log('Chart ready - Initializing Harmonic Pattern Scanner');
+					
+					// Initialize pattern detector
+					patternDetector = new HarmonicPatternDetector();
+					patternDetector.tolerance = settings.tolerance;
+					patternDetector.minSwingSize = settings.minSwingSize;
+					
+					// Wait a moment for chart to fully initialize
+					setTimeout(() => {
+						console.log('Chart fully loaded, enabling pattern detection');
+						updateScannerStatus();
+						
+						// Auto-enable Gartley scanner after chart is ready
+						setTimeout(() => {
+							console.log('Auto-starting Gartley pattern scan');
+							togglePatternScan('gartley');
+						}, 1000);
+					}, 500);
+				});
+
+				window.frames[0].focus();
+			}
+
+			// Event listeners
+			document.addEventListener('DOMContentLoaded', () => {
+				initOnReady();
+				
+				// Settings change listeners
+				document.addEventListener('change', (e) => {
+					if (e.target.matches('.setting-input')) {
+						updateSettings();
+					}
+				});
+			});
+		</script>
+	</head>
+
+	<body>
+		<div id="tv_chart_container"></div>
+		
+		<div class="scanner-panel">
+			<div class="scanner-header">
+				<h3 class="scanner-title">🔍 Harmonic Pattern Scanner</h3>
+				<span class="scanner-status status-inactive">INACTIVE</span>
+			</div>
+			
+			<div class="pattern-controls">
+				<div class="pattern-group">
+					<div class="pattern-group-title">Classic Patterns</div>
+					<button class="pattern-button" data-pattern="gartley" onclick="togglePatternScan('gartley')">
+						<span class="pattern-icon">🦋</span>
+						<span>Gartley</span>
+						<span class="pattern-count" style="display: none;">0</span>
+					</button>
+					<button class="pattern-button" data-pattern="bat" onclick="togglePatternScan('bat')">
+						<span class="pattern-icon">🦇</span>
+						<span>Bat</span>
+						<span class="pattern-count" style="display: none;">0</span>
+					</button>
+					<button class="pattern-button" data-pattern="butterfly" onclick="togglePatternScan('butterfly')">
+						<span class="pattern-icon">🦋</span>
+						<span>Butterfly</span>
+						<span class="pattern-count" style="display: none;">0</span>
+					</button>
+					<button class="pattern-button" data-pattern="crab" onclick="togglePatternScan('crab')">
+						<span class="pattern-icon">🦀</span>
+						<span>Crab</span>
+						<span class="pattern-count" style="display: none;">0</span>
+					</button>
+				</div>
+				
+				<div class="pattern-group">
+					<div class="pattern-group-title">Advanced Patterns</div>
+					<button class="pattern-button" data-pattern="shark" onclick="togglePatternScan('shark')">
+						<span class="pattern-icon">🦈</span>
+						<span>Shark</span>
+						<span class="pattern-count" style="display: none;">0</span>
+					</button>
+					<button class="pattern-button" data-pattern="cypher" onclick="togglePatternScan('cypher')">
+						<span class="pattern-icon">🔄</span>
+						<span>Cypher</span>
+						<span class="pattern-count" style="display: none;">0</span>
+					</button>
+				</div>
+			</div>
+			
+			<button class="control-button auto-scan-btn" onclick="toggleAutoScan()">
+				▶️ Start Auto Scan
+			</button>
+			
+			<button class="control-button clear-btn" onclick="clearAllPatterns()">
+				🗑️ Clear All Patterns
+			</button>
+			
+			<div class="settings-section">
+				<div class="pattern-group-title">Settings</div>
+				<div class="setting-item">
+					<label class="setting-label">Min Swing Size:</label>
+					<input type="number" id="minSwingSize" class="setting-input" value="5" min="3" max="20">
+				</div>
+				<div class="setting-item">
+					<label class="setting-label">Tolerance:</label>
+					<input type="number" id="tolerance" class="setting-input" value="0.05" min="0.01" max="0.2" step="0.01">
+				</div>
+				<div class="setting-item">
+					<label class="setting-label">Min Confidence:</label>
+					<input type="number" id="minConfidence" class="setting-input" value="70" min="50" max="95">
+				</div>
+			</div>
+			
+			<div class="results-section">
+				<div class="results-title">📊 Pattern Results</div>
+				<div class="results-container">
+					<div style="color: #757575; text-align: center; padding: 20px;">No patterns detected</div>
+				</div>
+			</div>
+			
+			<div class="info-section">
+				<strong>💡 Pattern Guide:</strong><br>
+				• <strong>Gartley:</strong> Classic 5-point pattern with 78.6% D completion<br>
+				• <strong>Bat:</strong> Conservative pattern with 88.6% D completion<br>
+				• <strong>Butterfly:</strong> Extended pattern beyond XA leg<br>
+				• <strong>Crab:</strong> Extreme extension with 161.8% D completion<br>
+				• <strong>Shark:</strong> Alternative pattern with 88.6%-113% completion<br>
+				• <strong>Cypher:</strong> Scott Carney's advanced pattern
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,513 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>TradingView Advanced Charts - Harmonic Patterns</title>
+		
+		<!-- Fix for iOS Safari zooming bug -->
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+		
+		<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
+		<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
+		
+		<style>
+			body {
+				margin: 0px;
+				font-family: Arial, sans-serif;
+			}
+			.controls {
+				position: fixed;
+				top: 10px;
+				right: 10px;
+				background: rgba(255, 255, 255, 0.9);
+				padding: 15px;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+				z-index: 1000;
+				max-width: 300px;
+			}
+			.controls h3 {
+				margin: 0 0 10px 0;
+				color: #333;
+			}
+			.pattern-button {
+				display: block;
+				width: 100%;
+				margin: 5px 0;
+				padding: 8px 12px;
+				background: #2196F3;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 12px;
+			}
+			.pattern-button:hover {
+				background: #1976D2;
+			}
+			.pattern-button.active {
+				background: #4CAF50;
+			}
+			.clear-button {
+				background: #f44336;
+			}
+			.clear-button:hover {
+				background: #d32f2f;
+			}
+			.info {
+				font-size: 11px;
+				color: #666;
+				margin-top: 10px;
+			}
+		</style>
+
+		<script type="text/javascript">
+			// Fibonacci ratios for harmonic patterns
+			const FIBONACCI_RATIOS = {
+				0.236: 0.236,
+				0.382: 0.382,
+				0.500: 0.500,
+				0.618: 0.618,
+				0.786: 0.786,
+				0.886: 0.886,
+				1.000: 1.000,
+				1.130: 1.130,
+				1.272: 1.272,
+				1.414: 1.414,
+				1.618: 1.618,
+				2.000: 2.000,
+				2.236: 2.236,
+				2.618: 2.618
+			};
+
+			// Harmonic pattern definitions
+			const HARMONIC_PATTERNS = {
+				gartley: {
+					name: "Gartley",
+					ratios: {
+						AB_XA: [0.618],
+						BC_AB: [0.382, 0.886],
+						CD_BC: [1.272, 1.618],
+						AD_XA: [0.786]
+					},
+					color: "#FF6B6B"
+				},
+				butterfly: {
+					name: "Butterfly",
+					ratios: {
+						AB_XA: [0.786],
+						BC_AB: [0.382, 0.886],
+						CD_BC: [1.618, 2.618],
+						AD_XA: [1.272, 1.618]
+					},
+					color: "#4ECDC4"
+				},
+				bat: {
+					name: "Bat",
+					ratios: {
+						AB_XA: [0.382, 0.500],
+						BC_AB: [0.382, 0.886],
+						CD_BC: [1.618, 2.618],
+						AD_XA: [0.886]
+					},
+					color: "#45B7D1"
+				},
+				crab: {
+					name: "Crab",
+					ratios: {
+						AB_XA: [0.382, 0.618],
+						BC_AB: [0.382, 0.886],
+						CD_BC: [2.236, 3.618],
+						AD_XA: [1.618]
+					},
+					color: "#96CEB4"
+				},
+				shark: {
+					name: "Shark",
+					ratios: {
+						AB_XA: [0.382, 0.618],
+						BC_AB: [1.130, 1.618],
+						CD_BC: [1.618, 2.236],
+						AD_XA: [0.886, 1.130]
+					},
+					color: "#FFEAA7"
+				}
+			};
+
+			let widget;
+			let currentPatterns = [];
+			let activeScanners = new Set();
+
+			function getParameterByName(name) {
+				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+					results = regex.exec(location.search);
+				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+			}
+
+			// Calculate Fibonacci retracement/extension
+			function calculateFibRatio(point1, point2, point3) {
+				const move1 = Math.abs(point2 - point1);
+				const move2 = Math.abs(point3 - point2);
+				return move1 === 0 ? 0 : move2 / move1;
+			}
+
+			// Check if ratio is within tolerance of target ratios
+			function isValidRatio(actualRatio, targetRatios, tolerance = 0.05) {
+				return targetRatios.some(target => 
+					Math.abs(actualRatio - target) <= tolerance
+				);
+			}
+
+			// Detect zigzag swing points
+			function detectSwingPoints(bars, minSwingSize = 5) {
+				const swings = [];
+				if (bars.length < minSwingSize * 2) return swings;
+
+				for (let i = minSwingSize; i < bars.length - minSwingSize; i++) {
+					const currentHigh = bars[i].high;
+					const currentLow = bars[i].low;
+					
+					// Check for swing high
+					let isSwingHigh = true;
+					let isSwingLow = true;
+					
+					for (let j = i - minSwingSize; j <= i + minSwingSize; j++) {
+						if (j !== i) {
+							if (bars[j].high >= currentHigh) isSwingHigh = false;
+							if (bars[j].low <= currentLow) isSwingLow = false;
+						}
+					}
+					
+					if (isSwingHigh) {
+						swings.push({
+							index: i,
+							time: bars[i].time,
+							price: currentHigh,
+							type: 'high'
+						});
+					} else if (isSwingLow) {
+						swings.push({
+							index: i,
+							time: bars[i].time,
+							price: currentLow,
+							type: 'low'
+						});
+					}
+				}
+				
+				return swings.sort((a, b) => a.time - b.time);
+			}
+
+			// Validate harmonic pattern
+			function validateHarmonicPattern(X, A, B, C, D, patternDef) {
+				const AB_XA = calculateFibRatio(X.price, A.price, B.price);
+				const BC_AB = calculateFibRatio(A.price, B.price, C.price);
+				const CD_BC = calculateFibRatio(B.price, C.price, D.price);
+				const AD_XA = calculateFibRatio(X.price, A.price, D.price);
+
+				const ratios = patternDef.ratios;
+				
+				return isValidRatio(AB_XA, ratios.AB_XA) &&
+					   isValidRatio(BC_AB, ratios.BC_AB) &&
+					   isValidRatio(CD_BC, ratios.CD_BC) &&
+					   isValidRatio(AD_XA, ratios.AD_XA);
+			}
+
+			// Find harmonic patterns in swing data
+			function findHarmonicPatterns(swings, patternType) {
+				const patterns = [];
+				const patternDef = HARMONIC_PATTERNS[patternType];
+				
+				if (swings.length < 5) return patterns;
+
+				for (let i = 0; i < swings.length - 4; i++) {
+					for (let j = i + 1; j < swings.length - 3; j++) {
+						for (let k = j + 1; k < swings.length - 2; k++) {
+							for (let l = k + 1; l < swings.length - 1; l++) {
+								for (let m = l + 1; m < swings.length; m++) {
+									const X = swings[i];
+									const A = swings[j];
+									const B = swings[k];
+									const C = swings[l];
+									const D = swings[m];
+
+									// Check alternating swing pattern
+									if (X.type !== B.type && X.type !== D.type && 
+										A.type !== C.type && A.type === X.type && 
+										B.type === C.type) {
+										
+										if (validateHarmonicPattern(X, A, B, C, D, patternDef)) {
+											patterns.push({
+												type: patternType,
+												points: [X, A, B, C, D],
+												color: patternDef.color,
+												name: patternDef.name,
+												bullish: (X.type === 'low' && A.type === 'high'),
+												timestamp: Date.now()
+											});
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				
+				return patterns;
+			}
+
+			// Draw pattern on chart
+			function drawHarmonicPattern(pattern) {
+				if (!widget || !widget.chart) return;
+
+				const chart = widget.chart();
+				const points = pattern.points;
+				
+				// Create shape for the pattern
+				const shapeOptions = {
+					shape: 'path',
+					lock: true,
+					disableSelection: false,
+					disableSave: false,
+					disableUndo: false,
+					zOrder: 'top',
+					showInObjectsTree: true
+				};
+
+				// Draw the harmonic pattern lines
+				const pathPoints = points.map(point => ({
+					time: point.time,
+					price: point.price
+				}));
+
+				try {
+					// Draw X-A-B-C-D pattern
+					for (let i = 0; i < points.length - 1; i++) {
+						chart.createShape(
+							{ time: points[i].time, price: points[i].price },
+							{
+								shape: 'trend_line',
+								overrides: {
+									linecolor: pattern.color,
+									linewidth: 2,
+									linestyle: 0
+								},
+								zOrder: 'top',
+								lock: false
+							}
+						).then(shapeId => {
+							if (shapeId) {
+								shapeId.setPoints([
+									{ time: points[i].time, price: points[i].price },
+									{ time: points[i + 1].time, price: points[i + 1].price }
+								]);
+							}
+						});
+					}
+
+					// Add pattern label
+					chart.createShape(
+						{ time: points[4].time, price: points[4].price },
+						{
+							shape: 'text',
+							text: `${pattern.name} ${pattern.bullish ? '🟢' : '🔴'}`,
+							overrides: {
+								color: pattern.color,
+								fontsize: 12,
+								bold: true
+							},
+							zOrder: 'top'
+						}
+					);
+
+					// Add Fibonacci ratio annotations
+					const ratios = [
+						`AB/XA: ${calculateFibRatio(points[0].price, points[1].price, points[2].price).toFixed(3)}`,
+						`BC/AB: ${calculateFibRatio(points[1].price, points[2].price, points[3].price).toFixed(3)}`,
+						`CD/BC: ${calculateFibRatio(points[2].price, points[3].price, points[4].price).toFixed(3)}`,
+						`AD/XA: ${calculateFibRatio(points[0].price, points[1].price, points[4].price).toFixed(3)}`
+					];
+
+					chart.createShape(
+						{ time: points[2].time, price: points[2].price },
+						{
+							shape: 'text',
+							text: ratios.join('\n'),
+							overrides: {
+								color: pattern.color,
+								fontsize: 10
+							},
+							zOrder: 'top'
+						}
+					);
+
+				} catch (error) {
+					console.error('Error drawing pattern:', error);
+				}
+			}
+
+			// Scan for patterns
+			function scanForPatterns(patternType) {
+				if (!widget || !widget.chart) return;
+
+				const chart = widget.chart();
+				
+				chart.getBars().then(bars => {
+					if (!bars || bars.length < 50) {
+						console.log('Not enough data for pattern analysis');
+						return;
+					}
+
+					const swings = detectSwingPoints(bars);
+					console.log(`Detected ${swings.length} swing points`);
+					
+					const patterns = findHarmonicPatterns(swings, patternType);
+					console.log(`Found ${patterns.length} ${patternType} patterns`);
+					
+					patterns.forEach(pattern => {
+						drawHarmonicPattern(pattern);
+						currentPatterns.push(pattern);
+					});
+
+					updatePatternInfo();
+				}).catch(error => {
+					console.error('Error scanning for patterns:', error);
+				});
+			}
+
+			// Clear all patterns
+			function clearAllPatterns() {
+				if (!widget || !widget.chart) return;
+				
+				try {
+					widget.chart().removeAllShapes();
+					currentPatterns = [];
+					updatePatternInfo();
+				} catch (error) {
+					console.error('Error clearing patterns:', error);
+				}
+			}
+
+			// Update pattern information
+			function updatePatternInfo() {
+				const infoDiv = document.querySelector('.pattern-info');
+				if (infoDiv) {
+					infoDiv.innerHTML = `Patterns found: ${currentPatterns.length}`;
+				}
+			}
+
+			// Toggle pattern scanner
+			function togglePatternScanner(patternType) {
+				const button = document.querySelector(`[data-pattern="${patternType}"]`);
+				
+				if (activeScanners.has(patternType)) {
+					activeScanners.delete(patternType);
+					button.classList.remove('active');
+				} else {
+					activeScanners.add(patternType);
+					button.classList.add('active');
+					scanForPatterns(patternType);
+				}
+			}
+
+			function initOnReady() {
+				var datafeedUrl = "https://demo-feed-data.tradingview.com";
+				var customDataUrl = getParameterByName('dataUrl');
+				if (customDataUrl !== "") {
+					datafeedUrl = customDataUrl.startsWith('https://') ? customDataUrl : `https://${customDataUrl}`;
+				}
+
+				widget = window.tvWidget = new TradingView.widget({
+					// debug: true,
+					fullscreen: true,
+					symbol: 'AAPL',
+					interval: '1D',
+					container: "tv_chart_container",
+					datafeed: new Datafeeds.UDFCompatibleDatafeed(datafeedUrl, undefined, {
+						maxResponseLength: 1000,
+						expectedOrder: 'latestFirst',
+					}),
+					library_path: "charting_library/",
+					locale: getParameterByName('lang') || "en",
+					disabled_features: ["use_localstorage_for_settings"],
+					enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
+					charts_storage_url: 'https://saveload.tradingview.com',
+					charts_storage_api_version: "1.1",
+					client_id: 'tradingview.com',
+					user_id: 'public_user_id',
+					theme: getParameterByName('theme'),
+					overrides: {
+						"mainSeriesProperties.candleStyle.upColor": "#00C851",
+						"mainSeriesProperties.candleStyle.downColor": "#ff4444",
+						"mainSeriesProperties.candleStyle.drawWick": true,
+						"mainSeriesProperties.candleStyle.drawBorder": true,
+						"mainSeriesProperties.candleStyle.borderColor": "#378658",
+						"mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
+						"mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
+						"mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
+						"mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
+					}
+				});
+
+				widget.onChartReady(() => {
+					console.log('Chart is ready - Harmonic Pattern Scanner initialized');
+					
+					// Enable drawing tools
+					widget.chart().createStudy('Fibonacci Retracement', false, false);
+					
+					// Auto-scan for Gartley patterns on load
+					setTimeout(() => {
+						togglePatternScanner('gartley');
+					}, 2000);
+				});
+
+				window.frames[0].focus();
+			}
+
+			window.addEventListener('DOMContentLoaded', initOnReady, false);
+		</script>
+	</head>
+
+	<body>
+		<div id="tv_chart_container"></div>
+		
+		<div class="controls">
+			<h3>🔍 Harmonic Pattern Scanner</h3>
+			
+			<button class="pattern-button" data-pattern="gartley" onclick="togglePatternScanner('gartley')">
+				🦋 Scan Gartley Patterns
+			</button>
+			
+			<button class="pattern-button" data-pattern="butterfly" onclick="togglePatternScanner('butterfly')">
+				🦋 Scan Butterfly Patterns
+			</button>
+			
+			<button class="pattern-button" data-pattern="bat" onclick="togglePatternScanner('bat')">
+				🦇 Scan Bat Patterns
+			</button>
+			
+			<button class="pattern-button" data-pattern="crab" onclick="togglePatternScanner('crab')">
+				🦀 Scan Crab Patterns
+			</button>
+			
+			<button class="pattern-button" data-pattern="shark" onclick="togglePatternScanner('shark')">
+				🦈 Scan Shark Patterns
+			</button>
+			
+			<button class="pattern-button clear-button" onclick="clearAllPatterns()">
+				🗑️ Clear All Patterns
+			</button>
+			
+			<div class="info">
+				<div class="pattern-info">Patterns found: 0</div>
+				<br>
+				<strong>Pattern Ratios:</strong><br>
+				• Gartley: AB=61.8% XA, CD=78.6% XA<br>
+				• Butterfly: AB=78.6% XA, CD=127%-161.8% XA<br>
+				• Bat: AB=38.2%-50% XA, CD=88.6% XA<br>
+				• Crab: CD=161.8% XA<br>
+				• Shark: CD=88.6%-113% XA
+			</div>
+		</div>
+	</body>
+</html>
