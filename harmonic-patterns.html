@@ -28,7 +28,7 @@
 			position: fixed;
 			top: 10px;
 			right: 10px;
-			background: rgba(255, 255, 255, 0.98);
+			background: rgba(255, 255, 255, 0.95);
 			padding: 16px;
 			border-radius: 8px;
 			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
@@ -398,131 +398,293 @@
 			return patterns;
 		}
 
-		// Draw pattern on chart - OPTIMIZED FOR SPEED
+		// Draw pattern on chart using TradingView's native drawing tools
 		function drawHarmonicPattern(pattern) {
 			if (!widget || !widget.chart) return;
 
-			console.log(`⚡ Fast drawing ${pattern.name} pattern...`);
+			console.log(`🎨 Drawing ${pattern.name} pattern using TradingView native tools...`);
 			const chart = widget.chart();
 			const points = pattern.points;
 
 			try {
-				// Use requestAnimationFrame for smooth drawing
+				// Use TradingView's native pattern drawing API
 				requestAnimationFrame(() => {
-					// Draw pattern lines with optimized settings
-					const drawPromises = [];
 
-					for (let i = 0; i < points.length - 1; i++) {
-						const promise = chart.createShape(
-							{ time: points[i].time, price: points[i].price },
+					// Method 1: Try using TradingView's XABCD Pattern tool
+					if (chart.createMultipointShape) {
+						const xabcdPattern = chart.createMultipointShape(
+							[
+								{ time: points[0].time, price: points[0].price }, // X
+								{ time: points[1].time, price: points[1].price }, // A
+								{ time: points[2].time, price: points[2].price }, // B
+								{ time: points[3].time, price: points[3].price }, // C
+								{ time: points[4].time, price: points[4].price }  // D
+							],
 							{
-								shape: 'trend_line',
+								shape: 'xabcd_pattern',
 								overrides: {
-									linecolor: pattern.color,
-									linewidth: 1,  // Thinner lines for speed
-									linestyle: 0,
-									transparency: 20
+									'linecolor': pattern.color,
+									'linewidth': 2,
+									'linestyle': 0,
+									'showLabel': true,
+									'textcolor': pattern.color,
+									'fontsize': 12,
+									'showRatios': true,
+									'transparency': 10
 								},
 								zOrder: 'top',
-								lock: false,
-								disableSelection: true,  // Disable selection for speed
-								disableSave: true       // Disable save for speed
+								disableSelection: false,
+								disableSave: false
 							}
 						);
 
-						if (promise && promise.then) {
+						if (xabcdPattern) {
+							console.log(`✅ Created native XABCD pattern for ${pattern.name}`);
+							return;
+						}
+					}
+
+					// Method 2: Use TradingView's Harmonic Pattern drawing tool
+					if (chart.executeActionById) {
+						// Activate harmonic pattern drawing tool
+						chart.executeActionById("drawingToolbarAction");
+
+						// Try to use the harmonic pattern tool
+						const harmonicTool = chart.createShape(
+							{ time: points[0].time, price: points[0].price },
+							{
+								shape: 'harmonic_pattern',
+								overrides: {
+									'pattern_type': pattern.type,
+									'linecolor': pattern.color,
+									'linewidth': 2,
+									'showRatios': true,
+									'showTargets': true,
+									'transparency': 15
+								},
+								points: points.map(p => ({ time: p.time, price: p.price })),
+								zOrder: 'top'
+							}
+						);
+
+						if (harmonicTool && harmonicTool.then) {
+							harmonicTool.then(shapeId => {
+								console.log(`✅ Created native harmonic pattern for ${pattern.name}`);
+							}).catch(() => {
+								console.log(`⚠️ Harmonic pattern tool not available, using trend lines`);
+								drawWithTrendLines();
+							});
+							return;
+						}
+					}
+
+					// Method 3: Fallback to enhanced trend lines with TradingView styling
+					function drawWithTrendLines() {
+						const drawPromises = [];
+
+						// Draw main pattern lines (X-A-B-C-D)
+						for (let i = 0; i < points.length - 1; i++) {
+							const linePromise = chart.createShape(
+								{ time: points[i].time, price: points[i].price },
+								{
+									shape: 'trend_line',
+									overrides: {
+										'linecolor': pattern.color,
+										'linewidth': 2,
+										'linestyle': 0,
+										'transparency': 10,
+										'extend': false,
+										'leftEnd': 'normal',
+										'rightEnd': 'normal'
+									},
+									zOrder: 'top',
+									lock: false,
+									disableSelection: false,
+									disableSave: false
+								}
+							);
+
+							if (linePromise && linePromise.then) {
+								drawPromises.push(
+									linePromise.then(shapeId => {
+										if (shapeId && shapeId.setPoints) {
+											shapeId.setPoints([
+												{ time: points[i].time, price: points[i].price },
+												{ time: points[i + 1].time, price: points[i + 1].price }
+											]);
+										}
+									}).catch(err => console.log('⚠️ Line draw warning:', err))
+								);
+							}
+						}
+
+						// Draw connecting line from C back to A (completing the pattern)
+						const caLinePromise = chart.createShape(
+							{ time: points[3].time, price: points[3].price },
+							{
+								shape: 'trend_line',
+								overrides: {
+									'linecolor': pattern.color,
+									'linewidth': 1,
+									'linestyle': 2, // Dashed line
+									'transparency': 30
+								},
+								zOrder: 'top'
+							}
+						);
+
+						if (caLinePromise && caLinePromise.then) {
 							drawPromises.push(
-								promise.then(shapeId => {
+								caLinePromise.then(shapeId => {
 									if (shapeId && shapeId.setPoints) {
 										shapeId.setPoints([
-											{ time: points[i].time, price: points[i].price },
-											{ time: points[i + 1].time, price: points[i + 1].price }
+											{ time: points[3].time, price: points[3].price }, // C
+											{ time: points[1].time, price: points[1].price }  // A
 										]);
 									}
-								}).catch(err => console.log('⚠️ Line draw warning:', err))
+								}).catch(err => console.log('⚠️ CA line warning:', err))
 							);
 						}
-					}
 
-					// Add simplified pattern label (faster)
-					const labelPromise = chart.createShape(
-						{ time: points[4].time, price: points[4].price },
-						{
-							shape: 'text',
-							text: `${pattern.name} ${pattern.bullish ? '🟢' : '🔴'}`,
-							overrides: {
-								color: pattern.color,
-								fontsize: 10,  // Smaller font for speed
-								bold: false     // No bold for speed
-							},
-							zOrder: 'top',
-							disableSelection: true,
-							disableSave: true
+						// Add pattern labels with TradingView styling
+						const labelPromise = chart.createShape(
+							{ time: points[4].time, price: points[4].price },
+							{
+								shape: 'text',
+								text: `${pattern.name}\n${pattern.bullish ? '🟢 Bullish' : '🔴 Bearish'}`,
+								overrides: {
+									'color': pattern.color,
+									'fontsize': 11,
+									'bold': true,
+									'italic': false,
+									'backgroundColor': 'rgba(255,255,255,0.9)',
+									'borderColor': pattern.color,
+									'transparency': 5
+								},
+								zOrder: 'top',
+								disableSelection: false,
+								disableSave: false
+							}
+						);
+
+						if (labelPromise && labelPromise.then) {
+							drawPromises.push(labelPromise.catch(err => console.log('⚠️ Label warning:', err)));
 						}
-					);
 
-					if (labelPromise && labelPromise.then) {
-						drawPromises.push(labelPromise.catch(err => console.log('⚠️ Label draw warning:', err)));
+						// Add Fibonacci ratio labels
+						const ratios = [
+							{ point1: 0, point2: 1, point3: 2, label: 'AB' },
+							{ point1: 1, point2: 2, point3: 3, label: 'BC' },
+							{ point1: 2, point2: 3, point3: 4, label: 'CD' }
+						];
+
+						ratios.forEach((ratioInfo, index) => {
+							const ratio = calculateFibRatio(
+								points[ratioInfo.point1].price,
+								points[ratioInfo.point2].price,
+								points[ratioInfo.point3].price
+							);
+
+							const midTime = points[ratioInfo.point2].time +
+								(points[ratioInfo.point3].time - points[ratioInfo.point2].time) / 2;
+							const midPrice = (points[ratioInfo.point2].price + points[ratioInfo.point3].price) / 2;
+
+							const ratioLabelPromise = chart.createShape(
+								{ time: midTime, price: midPrice },
+								{
+									shape: 'text',
+									text: `${ratioInfo.label}: ${(ratio * 100).toFixed(1)}%`,
+									overrides: {
+										'color': pattern.color,
+										'fontsize': 9,
+										'bold': false,
+										'backgroundColor': 'rgba(255,255,255,0.8)',
+										'transparency': 20
+									},
+									zOrder: 'top'
+								}
+							);
+
+							if (ratioLabelPromise && ratioLabelPromise.then) {
+								drawPromises.push(ratioLabelPromise.catch(err => console.log('⚠️ Ratio label warning:', err)));
+							}
+						});
+
+						// Wait for all drawings to complete
+						Promise.all(drawPromises).then(() => {
+							console.log(`✅ Drew ${pattern.name} pattern with TradingView styling`);
+						}).catch(err => {
+							console.log('⚠️ Some drawing operations had warnings:', err);
+						});
 					}
 
-					// Wait for all drawings to complete
-					Promise.all(drawPromises).then(() => {
-						console.log(`✅ Fast drew ${pattern.name} pattern`);
-					}).catch(err => {
-						console.log('⚠️ Some drawing operations had warnings:', err);
-					});
+					// Execute the fallback method
+					drawWithTrendLines();
 				});
 
 			} catch (error) {
-				console.log('⚠️ Fast drawing warning:', error);
+				console.log('⚠️ Native pattern drawing error:', error);
 			}
 		}
 
-		// Scan for patterns - OPTIMIZED FOR SPEED
-		function scanForPatterns(patternType) {
+		// Scan for ALL harmonic patterns automatically
+		function scanAllPatterns() {
 			if (!widget || !widget.chart) return;
 
-			console.log(`⚡ FAST scanning for ${patternType} patterns...`);
+			console.log(`🔍 SCANNING ALL harmonic patterns...`);
 			const chart = widget.chart();
 
-			// Use faster data access method
-			chart.executeActionById("chartProperties");
+			// Clear existing patterns first
+			clearAllPatterns();
 
-			// Get visible bars only for speed
-			const visibleRange = chart.getVisibleRange();
-
-			// Faster bar access with smaller dataset
+			// Get chart data
 			chart.getBars().then(bars => {
-				if (!bars || bars.length < 20) {  // Reduced minimum for speed
-					console.log('⚠️ Not enough data for fast pattern analysis');
+				if (!bars || bars.length < 20) {
+					console.log('⚠️ Not enough data for pattern analysis');
+					updatePatternInfo();
 					return;
 				}
 
-				// Use only recent data for speed (last 200 bars)
+				// Use recent data for analysis
 				const recentBars = bars.slice(-200);
-				console.log(`⚡ Analyzing ${recentBars.length} recent bars for speed`);
+				console.log(`📊 Analyzing ${recentBars.length} bars for all patterns`);
 
-				const swings = detectSwingPoints(recentBars, 3);  // Reduced swing size for speed
-				console.log(`⚡ Detected ${swings.length} swing points in fast mode`);
+				const swings = detectSwingPoints(recentBars, 3);
+				console.log(`📈 Detected ${swings.length} swing points`);
 
-				const patterns = findHarmonicPatterns(swings, patternType);
-				console.log(`⚡ Found ${patterns.length} ${patternType} patterns quickly`);
+				// Scan for all pattern types
+				const allPatternTypes = ['gartley', 'butterfly', 'bat', 'crab', 'shark'];
+				let totalPatternsFound = 0;
 
-				// Draw patterns with batching for speed
-				if (patterns.length > 0) {
-					patterns.slice(0, 5).forEach((pattern, index) => {  // Limit to 5 patterns for speed
-						setTimeout(() => {
-							drawHarmonicPattern(pattern);
-							currentPatterns.push(pattern);
-						}, index * 100);  // Stagger drawing for smooth UI
-					});
-				}
+				allPatternTypes.forEach((patternType, index) => {
+					setTimeout(() => {
+						const patterns = findHarmonicPatterns(swings, patternType);
+						console.log(`🎯 Found ${patterns.length} ${patternType} patterns`);
 
-				updatePatternInfo();
-				console.log(`✅ Fast pattern scan completed in optimized mode`);
+						if (patterns.length > 0) {
+							patterns.slice(0, 2).forEach((pattern, patternIndex) => {  // Limit to 2 per pattern type
+								setTimeout(() => {
+									drawHarmonicPattern(pattern);
+									currentPatterns.push(pattern);
+									totalPatternsFound++;
+									updatePatternInfo();
+								}, patternIndex * 200);  // Stagger drawing
+							});
+						}
+
+						// Update info after each pattern type is processed
+						if (index === allPatternTypes.length - 1) {
+							setTimeout(() => {
+								console.log(`✅ Pattern scan completed! Found ${totalPatternsFound} total patterns`);
+								updatePatternInfo();
+							}, 1000);
+						}
+					}, index * 300);  // Stagger pattern type scanning
+				});
 
 			}).catch(error => {
-				console.error('❌ Fast pattern scan error:', error);
+				console.error('❌ Pattern scan error:', error);
+				updatePatternInfo();
 			});
 		}
 
@@ -539,25 +701,24 @@
 			}
 		}
 
-		// Update pattern information
+		// Update pattern information display
 		function updatePatternInfo() {
 			const infoDiv = document.querySelector('.pattern-info');
 			if (infoDiv) {
-				infoDiv.innerHTML = `Patterns found: ${currentPatterns.length}`;
-			}
-		}
+				const patternCounts = {};
+				currentPatterns.forEach(pattern => {
+					patternCounts[pattern.name] = (patternCounts[pattern.name] || 0) + 1;
+				});
 
-		// Toggle pattern scanner
-		function togglePatternScanner(patternType) {
-			const button = document.querySelector(`[data-pattern="${patternType}"]`);
+				let displayText = `Patterns found: ${currentPatterns.length}`;
+				if (currentPatterns.length > 0) {
+					displayText += '\n';
+					Object.entries(patternCounts).forEach(([name, count]) => {
+						displayText += `• ${name}: ${count} `;
+					});
+				}
 
-			if (activeScanners.has(patternType)) {
-				activeScanners.delete(patternType);
-				button.classList.remove('active');
-			} else {
-				activeScanners.add(patternType);
-				button.classList.add('active');
-				scanForPatterns(patternType);
+				infoDiv.innerHTML = displayText.replace(/\n/g, '<br>');
 			}
 		}
 
@@ -581,10 +742,9 @@
 				library_path: "charting_library/",
 				locale: getParameterByName('lang') || "en",
 
-				// SPEED OPTIMIZATIONS - Keep essential trading features
+				// SPEED OPTIMIZATIONS - Keep essential trading features + drawing tools
 				disabled_features: [
 					"use_localstorage_for_settings",
-					"edit_buttons_in_legend",
 					"context_menus",
 					"border_around_the_chart"
 				],
@@ -600,7 +760,12 @@
 					"header_compare",
 					"header_undo_redo",
 					"header_screenshot",
-					"timeframes_toolbar"
+					"timeframes_toolbar",
+					"left_toolbar",
+					"drawing_templates",
+					"create_volume_indicator_by_default",
+					"edit_buttons_in_legend",
+					"border_around_the_chart"
 				],
 
 				// Simplified for speed
@@ -673,26 +838,10 @@
 	<div id="tv_chart_container"></div>
 
 	<div class="controls">
-		<h3>Harmonic Pattern Scanner</h3>
+		<h3>🔍 Harmonic Pattern Scanner</h3>
 
-		<button class="pattern-button" data-pattern="gartley" onclick="togglePatternScanner('gartley')">
-			⚡ Scan Gartley Patterns
-		</button>
-
-		<button class="pattern-button" data-pattern="butterfly" onclick="togglePatternScanner('butterfly')">
-			⚡ Scan Butterfly Patterns
-		</button>
-
-		<button class="pattern-button" data-pattern="bat" onclick="togglePatternScanner('bat')">
-			⚡ Scan Bat Patterns
-		</button>
-
-		<button class="pattern-button" data-pattern="crab" onclick="togglePatternScanner('crab')">
-			⚡ Scan Crab Patterns
-		</button>
-
-		<button class="pattern-button" data-pattern="shark" onclick="togglePatternScanner('shark')">
-			⚡ Scan Shark Patterns
+		<button class="pattern-button" onclick="scanAllPatterns()">
+			🔍 Scan All Patterns
 		</button>
 
 		<button class="pattern-button clear-button" onclick="clearAllPatterns()">
@@ -700,9 +849,9 @@
 		</button>
 
 		<div class="info">
-			<div class="pattern-info">Patterns found: 0</div>
+			<div class="pattern-info">Ready to scan patterns... ⚡</div>
 
-			<strong>Pattern Ratios:</strong><br>
+			<strong>Pattern Types Detected:</strong><br>
 			⟐ Gartley: AB=61.8% XA, CD=78.6% XA<br>
 			⟐ Butterfly: AB=78.6% XA, CD=127%-161.8% XA<br>
 			⟐ Bat: AB=38.2%-50% XA, CD=88.6% XA<br>
