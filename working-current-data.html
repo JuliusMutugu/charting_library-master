@@ -1,204 +1,214 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-		<title>TradingView Charts - WORKING Current Data</title>
-		
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
-		
-		<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
-		<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
-		
-		<style>
-			body {
-				margin: 0px;
-				font-family: Arial, sans-serif;
-			}
-			.controls {
-				position: fixed;
-				top: 10px;
-				right: 10px;
-				background: rgba(255, 255, 255, 0.9);
-				padding: 15px;
-				border-radius: 8px;
-				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-				z-index: 1000;
-				max-width: 300px;
-			}
-			.controls h3 {
-				margin: 0 0 10px 0;
-				color: #333;
-			}
-			.pattern-button {
-				display: block;
-				width: 100%;
-				margin: 5px 0;
-				padding: 8px 12px;
-				background: #2196F3;
-				color: white;
-				border: none;
-				border-radius: 4px;
-				cursor: pointer;
-				font-size: 12px;
-			}
-			.pattern-button:hover {
-				background: #1976D2;
-			}
-			.pattern-button.active {
-				background: #4CAF50;
-			}
-			.clear-button {
-				background: #f44336;
-			}
-			.clear-button:hover {
-				background: #d32f2f;
-			}
-			.info {
-				font-size: 11px;
-				color: #666;
-				margin-top: 10px;
-			}
-		</style>
 
-		<script type="text/javascript">
-			let widget;
+<head>
+    <title>TradingView Charts - WORKING Current Data</title>
 
-			function getParameterByName(name) {
-				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-					results = regex.exec(location.search);
-				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-			}
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
 
-			function initOnReady() {
-				// Use Binance public API - this actually works and has current data
-				const binanceDatafeed = {
-					onReady: function(callback) {
-						console.log('Binance datafeed ready');
-						setTimeout(() => callback({
-							supported_resolutions: ['1D'],
-							supports_marks: false,
-							supports_timescale_marks: false,
-							supports_time: true,
-						}), 0);
-					},
-					
-					searchSymbols: function(userInput, exchange, symbolType, onResultReadyCallback) {
-						onResultReadyCallback([]);
-					},
-					
-					resolveSymbol: function(symbolName, onSymbolResolvedCallback, onResolveErrorCallback) {
-						const symbolInfo = {
-							name: symbolName,
-							description: symbolName,
-							type: 'crypto',
-							session: '24x7',
-							timezone: 'Etc/UTC',
-							ticker: symbolName,
-							exchange: 'Binance',
-							minmov: 1,
-							pricescale: 100,
-							has_intraday: false,
-							supported_resolutions: ['1D'],
-							volume_precision: 2,
-							data_status: 'streaming',
-						};
-						setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
-					},
-					
-					getBars: function(symbolInfo, resolution, from, to, onHistoryCallback, onErrorCallback, firstDataRequest) {
-						// Use Binance API for real current data
-						const symbol = 'BTCUSDT'; // Use Bitcoin as it has guaranteed current data
-						const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=500`;
-						
-						fetch(url)
-							.then(response => response.json())
-							.then(data => {
-								const bars = data.map(item => ({
-									time: parseInt(item[0]),
-									open: parseFloat(item[1]),
-									high: parseFloat(item[2]),
-									low: parseFloat(item[3]),
-									close: parseFloat(item[4]),
-									volume: parseFloat(item[5])
-								}));
-								
-								console.log(`Loaded ${bars.length} current bars from Binance API`);
-								console.log(`Latest date: ${new Date(bars[bars.length-1].time).toDateString()}`);
-								
-								onHistoryCallback(bars, {noData: false});
-							})
-							.catch(error => {
-								console.error('Binance API error:', error);
-								onErrorCallback('Failed to load current data');
-							});
-					},
-					
-					subscribeBars: function(symbolInfo, resolution, onRealtimeCallback, subscribeUID, onResetCacheNeededCallback) {
-						console.log('Live updates enabled');
-					},
-					
-					unsubscribeBars: function(subscribeUID) {
-						console.log('Live updates disabled');
-					}
-				};
+    <script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
+    <script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
 
-				widget = window.tvWidget = new TradingView.widget({
-					debug: false,
-					fullscreen: true,
-					symbol: 'BTCUSDT',
-					interval: '1D',
-					container: "tv_chart_container",
-					datafeed: binanceDatafeed,
-					library_path: "charting_library/",
-					locale: "en",
-					disabled_features: ["use_localstorage_for_settings"],
-					enabled_features: ["study_templates"],
-					theme: "dark",
-					overrides: {
-						"mainSeriesProperties.candleStyle.upColor": "#00C851",
-						"mainSeriesProperties.candleStyle.downColor": "#ff4444",
-						"mainSeriesProperties.candleStyle.drawWick": true,
-						"mainSeriesProperties.candleStyle.drawBorder": true,
-						"mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
-						"mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
-						"mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
-						"mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
-					}
-				});
+    <style>
+        body {
+            margin: 0px;
+            font-family: Arial, sans-serif;
+        }
 
-				widget.onChartReady(() => {
-					console.log('Chart ready with REAL current data from Binance API');
-				});
-			}
+        .controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-width: 300px;
+        }
 
-			// Pattern scanning functions (simplified for testing)
-			function togglePatternScanner(pattern) {
-				console.log(`Pattern scanner ${pattern} toggled`);
-				const button = document.querySelector(`[data-pattern="${pattern}"]`);
-				if (button) {
-					button.classList.toggle('active');
-				}
-			}
+        .controls h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
 
-			window.addEventListener('DOMContentLoaded', initOnReady, false);
-		</script>
-	</head>
+        .pattern-button {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
 
-	<body>
-		<div id="tv_chart_container"></div>
-		
-		<div class="controls">
-			<h3>🔍 Pattern Scanner - LIVE DATA</h3>
-			
-			<button class="pattern-button" data-pattern="gartley" onclick="togglePatternScanner('gartley')">
-				🦋 Test Pattern Scanner
-			</button>
-			
-			<div class="info">
-				✅ Using Binance API for guaranteed current data<br>
-				📅 Real-time Bitcoin prices (proof of concept)<br>
-				🔄 Current August 2025 data
-			</div>
-		</div>
-	</body>
+        .pattern-button:hover {
+            background: #1976D2;
+        }
+
+        .pattern-button.active {
+            background: #4CAF50;
+        }
+
+        .clear-button {
+            background: #f44336;
+        }
+
+        .clear-button:hover {
+            background: #d32f2f;
+        }
+
+        .info {
+            font-size: 11px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        let widget;
+
+        function getParameterByName(name) {
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                results = regex.exec(location.search);
+            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        }
+
+        function initOnReady() {
+            // Use Binance public API - this actually works and has current data
+            const binanceDatafeed = {
+                onReady: function (callback) {
+                    console.log('Binance datafeed ready');
+                    setTimeout(() => callback({
+                        supported_resolutions: ['1D'],
+                        supports_marks: false,
+                        supports_timescale_marks: false,
+                        supports_time: true,
+                    }), 0);
+                },
+
+                searchSymbols: function (userInput, exchange, symbolType, onResultReadyCallback) {
+                    onResultReadyCallback([]);
+                },
+
+                resolveSymbol: function (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) {
+                    const symbolInfo = {
+                        name: symbolName,
+                        description: symbolName,
+                        type: 'crypto',
+                        session: '24x7',
+                        timezone: 'Etc/UTC',
+                        ticker: symbolName,
+                        exchange: 'Binance',
+                        minmov: 1,
+                        pricescale: 100,
+                        has_intraday: false,
+                        supported_resolutions: ['1D'],
+                        volume_precision: 2,
+                        data_status: 'streaming',
+                    };
+                    setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
+                },
+
+                getBars: function (symbolInfo, resolution, from, to, onHistoryCallback, onErrorCallback, firstDataRequest) {
+                    // Use Binance API for real current data
+                    const symbol = 'BTCUSDT'; // Use Bitcoin as it has guaranteed current data
+                    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=500`;
+
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            const bars = data.map(item => ({
+                                time: parseInt(item[0]),
+                                open: parseFloat(item[1]),
+                                high: parseFloat(item[2]),
+                                low: parseFloat(item[3]),
+                                close: parseFloat(item[4]),
+                                volume: parseFloat(item[5])
+                            }));
+
+                            console.log(`Loaded ${bars.length} current bars from Binance API`);
+                            console.log(`Latest date: ${new Date(bars[bars.length - 1].time).toDateString()}`);
+
+                            onHistoryCallback(bars, { noData: false });
+                        })
+                        .catch(error => {
+                            console.error('Binance API error:', error);
+                            onErrorCallback('Failed to load current data');
+                        });
+                },
+
+                subscribeBars: function (symbolInfo, resolution, onRealtimeCallback, subscribeUID, onResetCacheNeededCallback) {
+                    console.log('Live updates enabled');
+                },
+
+                unsubscribeBars: function (subscribeUID) {
+                    console.log('Live updates disabled');
+                }
+            };
+
+            widget = window.tvWidget = new TradingView.widget({
+                debug: false,
+                fullscreen: true,
+                symbol: 'BTCUSDT',
+                interval: '1D',
+                container: "tv_chart_container",
+                datafeed: binanceDatafeed,
+                library_path: "charting_library/",
+                locale: "en",
+                disabled_features: ["use_localstorage_for_settings"],
+                enabled_features: ["study_templates"],
+                theme: "dark",
+                overrides: {
+                    "mainSeriesProperties.candleStyle.upColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.downColor": "#ff4444",
+                    "mainSeriesProperties.candleStyle.drawWick": true,
+                    "mainSeriesProperties.candleStyle.drawBorder": true,
+                    "mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
+                    "mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
+                    "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
+                }
+            });
+
+            widget.onChartReady(() => {
+                console.log('Chart ready with REAL current data from Binance API');
+            });
+        }
+
+        // Pattern scanning functions (simplified for testing)
+        function togglePatternScanner(pattern) {
+            console.log(`Pattern scanner ${pattern} toggled`);
+            const button = document.querySelector(`[data-pattern="${pattern}"]`);
+            if (button) {
+                button.classList.toggle('active');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initOnReady, false);
+    </script>
+</head>
+
+<body>
+    <div id="tv_chart_container"></div>
+
+    <div class="controls">
+        <h3>🔍 Pattern Scanner - LIVE DATA</h3>
+
+        <button class="pattern-button" data-pattern="gartley" onclick="togglePatternScanner('gartley')">
+            🦋 Test Pattern Scanner
+        </button>
+
+        <div class="info">
+            ✅ Using Binance API for guaranteed current data<br>
+            📅 Real-time Bitcoin prices (proof of concept)<br>
+            🔄 Current August 2025 data
+        </div>
+    </div>
+</body>
+
 </html>

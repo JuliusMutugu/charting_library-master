@@ -1,67 +1,181 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
     <title>Simple Gartley Scanner</title>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
     <script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
     <script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
-    
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #131722; color: #d1d4dc; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #131722;
+            color: #d1d4dc;
+        }
+
         .toolbar {
-            position: fixed; top: 0; left: 0; right: 0; height: 50px;
-            background: #1e222d; border-bottom: 1px solid #2a2e39;
-            display: flex; align-items: center; padding: 0 20px; z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #1e222d;
+            border-bottom: 1px solid #2a2e39;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
         }
-        
-        .logo { color: #2962ff; font-size: 18px; font-weight: bold; margin-right: 30px; }
-        
+
+        .logo {
+            color: #2962ff;
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 30px;
+        }
+
         .scan-btn {
-            background: #2962ff; color: white; border: none; border-radius: 6px;
-            padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer;
-            margin-right: 15px; transition: all 0.2s ease;
+            background: #2962ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 15px;
+            transition: all 0.2s ease;
         }
-        .scan-btn:hover { background: #1e53e5; }
-        .scan-btn.scanning { background: #ff7043; animation: pulse 1s infinite; }
-        
+
+        .scan-btn:hover {
+            background: #1e53e5;
+        }
+
+        .scan-btn.scanning {
+            background: #ff7043;
+            animation: pulse 1s infinite;
+        }
+
         .clear-btn {
-            background: transparent; color: #d1d4dc; border: 1px solid #3a3e49;
-            border-radius: 6px; padding: 10px 20px; font-size: 14px; cursor: pointer;
-            margin-right: 15px; transition: all 0.2s ease;
+            background: transparent;
+            color: #d1d4dc;
+            border: 1px solid #3a3e49;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 15px;
+            transition: all 0.2s ease;
         }
-        .clear-btn:hover { background: #2a2e39; }
-        
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        
-        .status { margin-left: auto; font-size: 13px; color: #868993; }
-        .status.success { color: #4caf50; }
-        .status.error { color: #f44336; }
-        
-        #tv_chart_container { width: 100%; height: calc(100vh - 50px); margin-top: 50px; }
-        
+
+        .clear-btn:hover {
+            background: #2a2e39;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .status {
+            margin-left: auto;
+            font-size: 13px;
+            color: #868993;
+        }
+
+        .status.success {
+            color: #4caf50;
+        }
+
+        .status.error {
+            color: #f44336;
+        }
+
+        #tv_chart_container {
+            width: 100%;
+            height: calc(100vh - 50px);
+            margin-top: 50px;
+        }
+
         .results {
-            position: fixed; top: 70px; right: 20px; width: 280px;
-            background: rgba(30, 34, 45, 0.95); border: 1px solid #3a3e49;
-            border-radius: 8px; padding: 15px; display: none; z-index: 999;
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 280px;
+            background: rgba(30, 34, 45, 0.95);
+            border: 1px solid #3a3e49;
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+            z-index: 999;
             backdrop-filter: blur(10px);
         }
-        .results h3 { color: #2962ff; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .close-results { 
-            background: none; border: none; color: #868993; cursor: pointer; 
-            font-size: 18px; padding: 0; width: 20px; height: 20px;
+
+        .results h3 {
+            color: #2962ff;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .close-results:hover { color: #d1d4dc; }
+
+        .close-results {
+            background: none;
+            border: none;
+            color: #868993;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+        }
+
+        .close-results:hover {
+            color: #d1d4dc;
+        }
+
         .pattern-item {
-            background: #2a2e39; border-radius: 6px; padding: 12px; margin-bottom: 8px;
+            background: #2a2e39;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
             border-left: 4px solid #2962ff;
         }
-        .pattern-title { font-weight: bold; margin-bottom: 6px; font-size: 13px; }
-        .pattern-details { font-size: 11px; color: #868993; line-height: 1.3; }
+
+        .pattern-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .pattern-details {
+            font-size: 11px;
+            color: #868993;
+            line-height: 1.3;
+        }
+
         .confidence {
-            background: #4caf50; color: white; padding: 2px 6px;
-            border-radius: 10px; font-size: 10px; font-weight: bold; margin-top: 6px;
+            background: #4caf50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 6px;
             display: inline-block;
         }
     </style>
@@ -85,23 +199,23 @@
                 const bars = [];
                 const now = Date.now();
                 let price = 190; // Realistic AAPL starting price
-                
+
                 // Create 200 bars with realistic AAPL movement
                 for (let i = 200; i >= 0; i--) {
                     const timestamp = Math.floor((now - (i * 24 * 3600 * 1000)) / 1000); // Daily bars
-                    
+
                     // Create realistic stock movement with trends and volatility
                     const trend = Math.sin(i / 25) * 0.8; // Longer trend cycles
                     const noise = (Math.random() - 0.5) * 4; // More realistic stock volatility
-                    
+
                     const open = price;
                     const close = price + trend + noise;
-                    
+
                     // Generate realistic daily high/low with gaps
                     const dailyRange = Math.abs(close - open) + Math.random() * 3;
                     const high = Math.max(open, close) + dailyRange * Math.random();
                     const low = Math.min(open, close) - dailyRange * Math.random();
-                    
+
                     bars.push({
                         time: timestamp,
                         open: Math.round(open * 100) / 100,
@@ -109,10 +223,10 @@
                         low: Math.round(low * 100) / 100,
                         close: Math.round(close * 100) / 100
                     });
-                    
+
                     price = close;
                 }
-                
+
                 return bars.sort((a, b) => a.time - b.time);
             }
 
@@ -120,12 +234,12 @@
             findSwings(bars) {
                 const swings = [];
                 const lookback = 5;
-                
+
                 for (let i = lookback; i < bars.length - lookback; i++) {
                     const current = bars[i];
                     let isHigh = true;
                     let isLow = true;
-                    
+
                     // Check if current bar is a swing high or low
                     for (let j = i - lookback; j <= i + lookback; j++) {
                         if (j !== i) {
@@ -133,70 +247,70 @@
                             if (bars[j].low <= current.low) isLow = false;
                         }
                     }
-                    
+
                     if (isHigh && !isLow) {
                         swings.push({ index: i, time: current.time, price: current.high, type: 'high' });
                     } else if (isLow && !isHigh) {
                         swings.push({ index: i, time: current.time, price: current.low, type: 'low' });
                     }
                 }
-                
+
                 return swings;
             }
 
             // Create a guaranteed Gartley pattern for demonstration
             createDemoGartley(bars) {
                 const patterns = [];
-                
+
                 // Create a proper Gartley pattern with realistic AAPL prices
                 // AAPL typically trades around $180-200, so let's use realistic values
                 const basePrice = 190; // Realistic AAPL price
-                
+
                 // Create 5 points that form a valid Gartley "M" shape pattern
-                const X = { 
-                    time: bars[50].time, 
+                const X = {
+                    time: bars[50].time,
                     price: basePrice + 12,  // X = High point (start)
                     type: 'high',
                     label: 'X'
                 };
-                
-                const A = { 
-                    time: bars[80].time, 
+
+                const A = {
+                    time: bars[80].time,
                     price: basePrice - 8,   // A = Low point 
                     type: 'low',
                     label: 'A'
                 };
-                
-                const B = { 
-                    time: bars[110].time, 
+
+                const B = {
+                    time: bars[110].time,
                     price: basePrice + 4,   // B = High (61.8% retrace of XA)
                     type: 'high',
                     label: 'B'
                 };
-                
-                const C = { 
-                    time: bars[140].time, 
+
+                const C = {
+                    time: bars[140].time,
                     price: basePrice - 2,   // C = Low point
                     type: 'low',
                     label: 'C'
                 };
-                
-                const D = { 
-                    time: bars[170].time, 
+
+                const D = {
+                    time: bars[170].time,
                     price: basePrice + 1,   // D = Completion point (78.6% retrace of XA)
                     type: 'high',
                     label: 'D'
                 };
-                
+
                 // Calculate actual Fibonacci ratios to display
                 const XA_move = Math.abs(A.price - X.price);
                 const AB_retrace = Math.abs(B.price - A.price);
                 const BC_move = Math.abs(C.price - B.price);
                 const AD_retrace = Math.abs(D.price - A.price);
-                
+
                 const AB_XA_ratio = (AB_retrace / XA_move).toFixed(3);
                 const AD_XA_ratio = (AD_retrace / XA_move).toFixed(3);
-                
+
                 patterns.push({
                     name: 'Gartley',
                     points: [X, A, B, C, D],
@@ -209,20 +323,20 @@
                         AD_XA: AD_XA_ratio
                     }
                 });
-                
+
                 return patterns;
             }
 
             async detectPatterns() {
                 updateStatus('Creating market data...', 'info');
                 const bars = this.createDemoData();
-                
+
                 updateStatus('Finding swing points...', 'info');
                 const swings = this.findSwings(bars);
-                
+
                 updateStatus('Generating Gartley pattern...', 'info');
                 const patterns = this.createDemoGartley(bars);
-                
+
                 updateStatus(`Found ${patterns.length} Gartley pattern`, 'success');
                 return patterns;
             }
@@ -241,34 +355,34 @@
 
         async function scanPatterns() {
             if (isScanning) return;
-            
+
             isScanning = true;
             const btn = document.querySelector('.scan-btn');
             btn.classList.add('scanning');
             btn.textContent = 'Scanning...';
-            
+
             try {
                 // Clear previous patterns first
                 clearPatterns();
-                
+
                 updateStatus('Detecting patterns...', 'info');
                 const patterns = await detector.detectPatterns();
-                
+
                 console.log('Found patterns:', patterns);
-                
+
                 // Small delay to ensure chart is ready
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                
+
                 // Draw patterns on chart
                 for (const pattern of patterns) {
                     console.log('Drawing pattern:', pattern);
                     await drawPattern(pattern);
                 }
-                
+
                 // Show results
                 showResults(patterns);
                 updateStatus(`Found ${patterns.length} Gartley pattern - Check chart for lines`, 'success');
-                
+
             } catch (error) {
                 console.error('Scan error:', error);
                 updateStatus(`Error: ${error.message}`, 'error');
@@ -284,20 +398,20 @@
                 console.error('Chart not available for drawing');
                 return;
             }
-            
+
             const chart = widget.chart();
             const points = pattern.points;
-            
+
             console.log('Drawing Gartley pattern with points:', points);
-            
+
             try {
                 // Use bright, highly visible colors
                 const mainColor = "#00FF00";  // Bright green
                 const accentColor = "#FF0080"; // Bright magenta
                 const lineWidth = 4;
-                
+
                 console.log('Creating trend lines...');
-                
+
                 // Draw main structure lines with better error handling
                 const lines = [
                     [points[0], points[1]], // X-A
@@ -305,11 +419,11 @@
                     [points[2], points[3]], // B-C
                     [points[3], points[4]]  // C-D
                 ];
-                
+
                 for (let i = 0; i < lines.length; i++) {
                     const [start, end] = lines[i];
-                    console.log(`Drawing line ${i+1}: from ${start.price} to ${end.price}`);
-                    
+                    console.log(`Drawing line ${i + 1}: from ${start.price} to ${end.price}`);
+
                     try {
                         const lineId = await chart.createMultipointShape([
                             { time: start.time, price: start.price },
@@ -327,13 +441,13 @@
                             zOrder: "top",
                             lock: false
                         });
-                        
+
                         if (lineId) {
                             shapeIds.push(lineId);
-                            console.log(`Line ${i+1} created with ID:`, lineId);
+                            console.log(`Line ${i + 1} created with ID:`, lineId);
                         }
                     } catch (lineError) {
-                        console.error(`Error creating line ${i+1}:`, lineError);
+                        console.error(`Error creating line ${i + 1}:`, lineError);
                     }
                 }
 
@@ -362,7 +476,7 @@
                 console.log('Creating point labels...');
                 const labels = ['X', 'A', 'B', 'C', 'D'];
                 const labelColors = ['#FF0000', '#0080FF', '#FF8000', '#8000FF', '#00FF80'];
-                
+
                 for (let i = 0; i < points.length; i++) {
                     try {
                         const labelId = await chart.createMultipointShape([{
@@ -380,7 +494,7 @@
                             },
                             zOrder: "top"
                         });
-                        
+
                         if (labelId) {
                             shapeIds.push(labelId);
                             console.log(`Label ${labels[i]} created with ID:`, labelId);
@@ -414,12 +528,12 @@
 
         function showResults(patterns) {
             const resultsDiv = document.querySelector('.results');
-            
+
             let html = `
                 <h3>🦋 Gartley Results <button class="close-results" onclick="hideResults()">×</button></h3>
                 <div class="content">
             `;
-            
+
             patterns.forEach(pattern => {
                 const direction = pattern.direction === 'Bullish' ? '🟢' : '🔴';
                 html += `
@@ -436,7 +550,7 @@
                     </div>
                 `;
             });
-            
+
             html += '</div>';
             resultsDiv.innerHTML = html;
             resultsDiv.style.display = 'block';
@@ -490,4 +604,5 @@
         <!-- Results will be shown here -->
     </div>
 </body>
+
 </html>

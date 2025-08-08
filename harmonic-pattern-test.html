@@ -1,618 +1,620 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-		<title>TradingView - Harmonic Pattern Scanner (Working)</title>
-		
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
-		
-		<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
-		<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
-		
-		<style>
-			body {
-				margin: 0px;
-				font-family: Arial, sans-serif;
-				background: #131722;
-				color: #d1d4dc;
+
+<head>
+	<title>TradingView - Harmonic Pattern Scanner (Working)</title>
+
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+
+	<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
+	<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
+
+	<style>
+		body {
+			margin: 0px;
+			font-family: Arial, sans-serif;
+			background: #131722;
+			color: #d1d4dc;
+		}
+
+		.controls {
+			position: fixed;
+			top: 10px;
+			right: 10px;
+			background: rgba(19, 23, 34, 0.95);
+			border: 1px solid #2a2e39;
+			padding: 15px;
+			border-radius: 8px;
+			z-index: 1000;
+			max-width: 300px;
+		}
+
+		.pattern-button {
+			display: block;
+			width: 100%;
+			margin: 5px 0;
+			padding: 10px;
+			background: #2a2e39;
+			color: white;
+			border: 1px solid #434651;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		.pattern-button:hover {
+			background: #363a45;
+		}
+
+		.pattern-button.active {
+			background: #1976d2;
+		}
+
+		.clear-button {
+			background: #f44336;
+		}
+
+		.info {
+			margin-top: 10px;
+			font-size: 12px;
+			color: #9598a1;
+		}
+	</style>
+
+	<script type="text/javascript">
+		let widget;
+		let shapeIds = [];
+
+		function getParameterByName(name) {
+			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(location.search);
+			return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}
+
+		function drawSampleGartleyPattern() {
+			if (!widget || !widget.chart()) {
+				console.log('Chart not ready');
+				return;
 			}
-			
-			.controls {
-				position: fixed;
-				top: 10px;
-				right: 10px;
-				background: rgba(19, 23, 34, 0.95);
-				border: 1px solid #2a2e39;
-				padding: 15px;
-				border-radius: 8px;
-				z-index: 1000;
-				max-width: 300px;
-			}
-			
-			.pattern-button {
-				display: block;
-				width: 100%;
-				margin: 5px 0;
-				padding: 10px;
-				background: #2a2e39;
-				color: white;
-				border: 1px solid #434651;
-				border-radius: 4px;
-				cursor: pointer;
-			}
-			
-			.pattern-button:hover {
-				background: #363a45;
-			}
-			
-			.pattern-button.active {
-				background: #1976d2;
-			}
-			
-			.clear-button {
-				background: #f44336;
-			}
-			
-			.info {
-				margin-top: 10px;
-				font-size: 12px;
-				color: #9598a1;
-			}
-		</style>
 
-		<script type="text/javascript">
-			let widget;
-			let shapeIds = [];
+			const chart = widget.chart();
+			console.log('Drawing CORRECT Gartley pattern...');
 
-			function getParameterByName(name) {
-				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-					results = regex.exec(location.search);
-				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-			}
+			// Clear existing shapes first
+			clearAllPatterns();
 
-			function drawSampleGartleyPattern() {
-				if (!widget || !widget.chart()) {
-					console.log('Chart not ready');
-					return;
-				}
+			// Get current visible range to position pattern
+			const range = chart.getVisibleRange();
+			const currentTime = range.to;
+			const timeSpan = range.to - range.from;
 
-				const chart = widget.chart();
-				console.log('Drawing CORRECT Gartley pattern...');
-				
-				// Clear existing shapes first
-				clearAllPatterns();
-				
-				// Get current visible range to position pattern
-				const range = chart.getVisibleRange();
-				const currentTime = range.to;
-				const timeSpan = range.to - range.from;
-				
-				// Create CORRECT XABCD points for a bullish Gartley
-				const basePrice = 150;
-				const XA_move = 20; // XA leg size
-				
-				const points = [
-					{ time: currentTime - (timeSpan * 0.8), price: basePrice },                    // X (low)
-					{ time: currentTime - (timeSpan * 0.6), price: basePrice + XA_move },         // A (high)
-					{ time: currentTime - (timeSpan * 0.4), price: basePrice + (XA_move * 0.382) }, // B (61.8% retracement of XA)
-					{ time: currentTime - (timeSpan * 0.2), price: basePrice + (XA_move * 0.618) }, // C (38.2-88.6% of AB)
-					{ time: currentTime - (timeSpan * 0.05), price: basePrice + (XA_move * 0.786) } // D (78.6% of XA)
-				];
+			// Create CORRECT XABCD points for a bullish Gartley
+			const basePrice = 150;
+			const XA_move = 20; // XA leg size
 
-				console.log('CORRECT Gartley points:', points);
+			const points = [
+				{ time: currentTime - (timeSpan * 0.8), price: basePrice },                    // X (low)
+				{ time: currentTime - (timeSpan * 0.6), price: basePrice + XA_move },         // A (high)
+				{ time: currentTime - (timeSpan * 0.4), price: basePrice + (XA_move * 0.382) }, // B (61.8% retracement of XA)
+				{ time: currentTime - (timeSpan * 0.2), price: basePrice + (XA_move * 0.618) }, // C (38.2-88.6% of AB)
+				{ time: currentTime - (timeSpan * 0.05), price: basePrice + (XA_move * 0.786) } // D (78.6% of XA)
+			];
 
-				// Draw the main XABCD structure (this is the key pattern)
-				const mainLines = [
-					{ from: 0, to: 1, color: '#FF6B6B', width: 3 }, // X to A
-					{ from: 1, to: 2, color: '#4ECDC4', width: 3 }, // A to B  
-					{ from: 2, to: 3, color: '#45B7D1', width: 3 }, // B to C
-					{ from: 3, to: 4, color: '#96CEB4', width: 3 }  // C to D
-				];
+			console.log('CORRECT Gartley points:', points);
 
-				// Draw the internal structure lines (this completes the Gartley)
-				const internalLines = [
-					{ from: 0, to: 2, color: '#FFD700', width: 2, style: 2 }, // X to B (diagonal)
-					{ from: 1, to: 3, color: '#FFD700', width: 2, style: 2 }, // A to C (diagonal)
-					{ from: 0, to: 4, color: '#FF69B4', width: 2, style: 1 }  // X to D (completion line)
-				];
+			// Draw the main XABCD structure (this is the key pattern)
+			const mainLines = [
+				{ from: 0, to: 1, color: '#FF6B6B', width: 3 }, // X to A
+				{ from: 1, to: 2, color: '#4ECDC4', width: 3 }, // A to B  
+				{ from: 2, to: 3, color: '#45B7D1', width: 3 }, // B to C
+				{ from: 3, to: 4, color: '#96CEB4', width: 3 }  // C to D
+			];
 
-				// Draw main structure
-				mainLines.forEach((line, index) => {
-					chart.createMultipointShape([
-						{ time: points[line.from].time, price: points[line.from].price },
-						{ time: points[line.to].time, price: points[line.to].price }
-					], {
-						shape: "trend_line",
-						overrides: {
-							linecolor: line.color,
-							linewidth: line.width,
-							linestyle: 0,
-							transparency: 0
-						},
-						zOrder: "top",
-						lock: false
-					}).then(shapeId => {
-						if (shapeId) {
-							shapeIds.push(shapeId);
-							console.log(`Main line ${index} created:`, shapeId);
-						}
-					}).catch(error => {
-						console.error(`Error creating main line ${index}:`, error);
-					});
-				});
+			// Draw the internal structure lines (this completes the Gartley)
+			const internalLines = [
+				{ from: 0, to: 2, color: '#FFD700', width: 2, style: 2 }, // X to B (diagonal)
+				{ from: 1, to: 3, color: '#FFD700', width: 2, style: 2 }, // A to C (diagonal)
+				{ from: 0, to: 4, color: '#FF69B4', width: 2, style: 1 }  // X to D (completion line)
+			];
 
-				// Draw internal structure (this makes it look like a proper Gartley)
-				internalLines.forEach((line, index) => {
-					chart.createMultipointShape([
-						{ time: points[line.from].time, price: points[line.from].price },
-						{ time: points[line.to].time, price: points[line.to].price }
-					], {
-						shape: "trend_line",
-						overrides: {
-							linecolor: line.color,
-							linewidth: line.width,
-							linestyle: line.style || 0,
-							transparency: 30
-						},
-						zOrder: "top",
-						lock: false
-					}).then(shapeId => {
-						if (shapeId) {
-							shapeIds.push(shapeId);
-							console.log(`Internal line ${index} created:`, shapeId);
-						}
-					}).catch(error => {
-						console.error(`Error creating internal line ${index}:`, error);
-					});
-				});
-
-				// Add point labels with proper Fibonacci ratios
-				const labels = [
-					{ text: 'X', color: '#FFFFFF', bg: '#FF6B6B' },
-					{ text: 'A', color: '#FFFFFF', bg: '#4ECDC4' },
-					{ text: 'B\n(61.8%)', color: '#FFFFFF', bg: '#45B7D1' },
-					{ text: 'C\n(38.2%)', color: '#FFFFFF', bg: '#96CEB4' },
-					{ text: 'D\n(78.6%)', color: '#FFFFFF', bg: '#FFD700' }
-				];
-				
-				points.forEach((point, index) => {
-					chart.createMultipointShape([{ time: point.time, price: point.price }], {
-						shape: "text",
-						text: labels[index].text,
-						overrides: {
-							color: labels[index].color,
-							fontsize: 12,
-							bold: true,
-							backgroundColor: labels[index].bg,
-							backgroundTransparency: 0
-						},
-						zOrder: "top"
-					}).then(textId => {
-						if (textId) {
-							shapeIds.push(textId);
-							console.log(`Label ${labels[index].text} created:`, textId);
-						}
-					}).catch(error => {
-						console.error(`Error creating label ${labels[index].text}:`, error);
-					});
-				});
-
-				// Add pattern identification with Fibonacci details
-				chart.createMultipointShape([{ time: points[4].time, price: points[4].price + 3 }], {
-					shape: "text",
-					text: "🦋 GARTLEY PATTERN\nBullish Reversal Zone\nAB=61.8% | CD=78.6%",
-					overrides: {
-						color: "#FFD700",
-						fontsize: 14,
-						bold: true,
-						backgroundColor: "#000000",
-						backgroundTransparency: 20
-					},
-					zOrder: "top"
-				}).then(titleId => {
-					if (titleId) {
-						shapeIds.push(titleId);
-						console.log('Pattern title created:', titleId);
-					}
-				}).catch(error => {
-					console.error('Error creating pattern title:', error);
-				});
-
-				// Add potential reversal zone rectangle
+			// Draw main structure
+			mainLines.forEach((line, index) => {
 				chart.createMultipointShape([
-					{ time: points[4].time - (timeSpan * 0.02), price: points[4].price - 1 },
-					{ time: points[4].time + (timeSpan * 0.02), price: points[4].price + 1 }
+					{ time: points[line.from].time, price: points[line.from].price },
+					{ time: points[line.to].time, price: points[line.to].price }
 				], {
-					shape: "rectangle",
+					shape: "trend_line",
 					overrides: {
-						color: "#FFD700",
-						transparency: 80,
-						borderColor: "#FFD700",
-						borderWidth: 2
+						linecolor: line.color,
+						linewidth: line.width,
+						linestyle: 0,
+						transparency: 0
 					},
-					zOrder: "bottom"
-				}).then(rectId => {
-					if (rectId) {
-						shapeIds.push(rectId);
-						console.log('Reversal zone created:', rectId);
+					zOrder: "top",
+					lock: false
+				}).then(shapeId => {
+					if (shapeId) {
+						shapeIds.push(shapeId);
+						console.log(`Main line ${index} created:`, shapeId);
 					}
 				}).catch(error => {
-					console.error('Error creating reversal zone:', error);
+					console.error(`Error creating main line ${index}:`, error);
 				});
+			});
 
-				console.log('CORRECT Gartley pattern drawing completed');
-			}
-
-			function drawGartleyWithAllLines() {
-				if (!widget || !widget.chart()) return;
-
-				const chart = widget.chart();
-				console.log('Drawing COMPLETE Gartley pattern with ALL lines...');
-				
-				clearAllPatterns();
-				
-				const range = chart.getVisibleRange();
-				const currentTime = range.to;
-				const timeSpan = range.to - range.from;
-				
-				// PROPER Gartley ratios
-				const basePrice = 150;
-				const XA_move = 20;
-				
-				const points = [
-					{ time: currentTime - (timeSpan * 0.8), price: basePrice },                    // X
-					{ time: currentTime - (timeSpan * 0.6), price: basePrice + XA_move },         // A  
-					{ time: currentTime - (timeSpan * 0.4), price: basePrice + (XA_move * 0.382) }, // B (61.8% of XA)
-					{ time: currentTime - (timeSpan * 0.2), price: basePrice + (XA_move * 0.618) }, // C 
-					{ time: currentTime - (timeSpan * 0.05), price: basePrice + (XA_move * 0.786) } // D (78.6% of XA)
-				];
-
-				// ALL the lines that make up a Gartley pattern:
-				const allLines = [
-					// Main structure (thick lines)
-					{ from: 0, to: 1, color: '#FF6B6B', width: 4, style: 0, label: 'XA' },
-					{ from: 1, to: 2, color: '#4ECDC4', width: 4, style: 0, label: 'AB' },
-					{ from: 2, to: 3, color: '#45B7D1', width: 4, style: 0, label: 'BC' },
-					{ from: 3, to: 4, color: '#96CEB4', width: 4, style: 0, label: 'CD' },
-					
-					// Internal structure (dashed lines)
-					{ from: 0, to: 2, color: '#FFD700', width: 2, style: 2, label: 'XB' },
-					{ from: 1, to: 3, color: '#FF69B4', width: 2, style: 2, label: 'AC' },
-					{ from: 0, to: 4, color: '#FF4444', width: 3, style: 1, label: 'XD' },
-					
-					// Completion lines (dotted)
-					{ from: 2, to: 4, color: '#00FF00', width: 2, style: 3, label: 'BD' },
-					{ from: 1, to: 4, color: '#FF8C00', width: 2, style: 3, label: 'AD' }
-				];
-
-				// Draw all lines
-				allLines.forEach((line, index) => {
-					chart.createMultipointShape([
-						{ time: points[line.from].time, price: points[line.from].price },
-						{ time: points[line.to].time, price: points[line.to].price }
-					], {
-						shape: "trend_line",
-						overrides: {
-							linecolor: line.color,
-							linewidth: line.width,
-							linestyle: line.style,
-							transparency: line.style > 0 ? 40 : 0
-						},
-						zOrder: "top"
-					}).then(shapeId => {
-						if (shapeId) shapeIds.push(shapeId);
-						console.log(`${line.label} line created`);
-					});
-				});
-
-				// Add enhanced point labels
-				const enhancedLabels = [
-					{ text: 'X\n(Start)', color: '#FFFFFF', bg: '#FF6B6B' },
-					{ text: 'A\n(100%)', color: '#FFFFFF', bg: '#4ECDC4' },
-					{ text: 'B\n(61.8%)', color: '#FFFFFF', bg: '#45B7D1' },
-					{ text: 'C\n(38.2-88.6%)', color: '#FFFFFF', bg: '#96CEB4' },
-					{ text: 'D\n(78.6%)', color: '#FFFFFF', bg: '#FFD700' }
-				];
-				
-				points.forEach((point, index) => {
-					chart.createMultipointShape([{ time: point.time, price: point.price }], {
-						shape: "text",
-						text: enhancedLabels[index].text,
-						overrides: {
-							color: enhancedLabels[index].color,
-							fontsize: 11,
-							bold: true,
-							backgroundColor: enhancedLabels[index].bg,
-							backgroundTransparency: 0
-						},
-						zOrder: "top"
-					}).then(textId => {
-						if (textId) shapeIds.push(textId);
-					});
-				});
-
-				// Add comprehensive pattern info
-				chart.createMultipointShape([{ time: points[4].time, price: points[4].price + 4 }], {
-					shape: "text",
-					text: "🦋 COMPLETE GARTLEY PATTERN\n✓ AB = 61.8% of XA\n✓ BC = 38.2-88.6% of AB\n✓ CD = 127.2-161.8% of BC\n✓ D = 78.6% of XA\nPRZ: Potential Reversal Zone",
+			// Draw internal structure (this makes it look like a proper Gartley)
+			internalLines.forEach((line, index) => {
+				chart.createMultipointShape([
+					{ time: points[line.from].time, price: points[line.from].price },
+					{ time: points[line.to].time, price: points[line.to].price }
+				], {
+					shape: "trend_line",
 					overrides: {
-						color: "#FFFFFF",
+						linecolor: line.color,
+						linewidth: line.width,
+						linestyle: line.style || 0,
+						transparency: 30
+					},
+					zOrder: "top",
+					lock: false
+				}).then(shapeId => {
+					if (shapeId) {
+						shapeIds.push(shapeId);
+						console.log(`Internal line ${index} created:`, shapeId);
+					}
+				}).catch(error => {
+					console.error(`Error creating internal line ${index}:`, error);
+				});
+			});
+
+			// Add point labels with proper Fibonacci ratios
+			const labels = [
+				{ text: 'X', color: '#FFFFFF', bg: '#FF6B6B' },
+				{ text: 'A', color: '#FFFFFF', bg: '#4ECDC4' },
+				{ text: 'B\n(61.8%)', color: '#FFFFFF', bg: '#45B7D1' },
+				{ text: 'C\n(38.2%)', color: '#FFFFFF', bg: '#96CEB4' },
+				{ text: 'D\n(78.6%)', color: '#FFFFFF', bg: '#FFD700' }
+			];
+
+			points.forEach((point, index) => {
+				chart.createMultipointShape([{ time: point.time, price: point.price }], {
+					shape: "text",
+					text: labels[index].text,
+					overrides: {
+						color: labels[index].color,
 						fontsize: 12,
 						bold: true,
-						backgroundColor: "#000000",
-						backgroundTransparency: 10
+						backgroundColor: labels[index].bg,
+						backgroundTransparency: 0
 					},
 					zOrder: "top"
-				}).then(titleId => {
-					if (titleId) shapeIds.push(titleId);
+				}).then(textId => {
+					if (textId) {
+						shapeIds.push(textId);
+						console.log(`Label ${labels[index].text} created:`, textId);
+					}
+				}).catch(error => {
+					console.error(`Error creating label ${labels[index].text}:`, error);
 				});
+			});
 
-				console.log('COMPLETE Gartley pattern with all lines drawn');
-			}
-				if (!widget || !widget.chart()) return;
-
-				const chart = widget.chart();
-				console.log('Drawing sample Butterfly pattern...');
-				
-				clearAllPatterns();
-				
-				const range = chart.getVisibleRange();
-				const currentTime = range.to;
-				const timeSpan = range.to - range.from;
-				
-				// Butterfly pattern points (bearish)
-				const basePrice = 160;
-				const points = [
-					{ time: currentTime - (timeSpan * 0.8), price: basePrice + 10 }, // X (start high)
-					{ time: currentTime - (timeSpan * 0.6), price: basePrice - 5 },  // A (low)
-					{ time: currentTime - (timeSpan * 0.4), price: basePrice + 2 },  // B (78.6% retracement)
-					{ time: currentTime - (timeSpan * 0.2), price: basePrice - 2 },  // C (retracement)
-					{ time: currentTime - (timeSpan * 0.05), price: basePrice + 15 } // D (127% extension)
-				];
-
-				// Draw butterfly pattern
-				for (let i = 0; i < points.length - 1; i++) {
-					chart.createMultipointShape([
-						{ time: points[i].time, price: points[i].price },
-						{ time: points[i + 1].time, price: points[i + 1].price }
-					], {
-						shape: "trend_line",
-						overrides: {
-							linecolor: "#4ECDC4",
-							linewidth: 3,
-							linestyle: 0
-						},
-						zOrder: "top"
-					}).then(shapeId => {
-						if (shapeId) shapeIds.push(shapeId);
-					});
+			// Add pattern identification with Fibonacci details
+			chart.createMultipointShape([{ time: points[4].time, price: points[4].price + 3 }], {
+				shape: "text",
+				text: "🦋 GARTLEY PATTERN\nBullish Reversal Zone\nAB=61.8% | CD=78.6%",
+				overrides: {
+					color: "#FFD700",
+					fontsize: 14,
+					bold: true,
+					backgroundColor: "#000000",
+					backgroundTransparency: 20
+				},
+				zOrder: "top"
+			}).then(titleId => {
+				if (titleId) {
+					shapeIds.push(titleId);
+					console.log('Pattern title created:', titleId);
 				}
+			}).catch(error => {
+				console.error('Error creating pattern title:', error);
+			});
 
-				// Add labels
-				const labels = ['X', 'A', 'B', 'C', 'D'];
-				points.forEach((point, index) => {
-					chart.createMultipointShape([{ time: point.time, price: point.price }], {
-						shape: "text",
-						text: labels[index],
-						overrides: {
-							color: "#FFFFFF",
-							fontsize: 14,
-							bold: true,
-							backgroundColor: "#4ECDC4"
-						},
-						zOrder: "top"
-					}).then(textId => {
-						if (textId) shapeIds.push(textId);
-					});
-				});
-
-				chart.createMultipointShape([{ time: points[4].time, price: points[4].price + 3 }], {
-					shape: "text",
-					text: "🦋 BUTTERFLY PATTERN",
-					overrides: {
-						color: "#4ECDC4",
-						fontsize: 16,
-						bold: true,
-						backgroundColor: "#000000"
-					},
-					zOrder: "top"
-				}).then(titleId => {
-					if (titleId) shapeIds.push(titleId);
-				});
-			}
-
-			function drawSampleBatPattern() {
-				if (!widget || !widget.chart()) return;
-
-				const chart = widget.chart();
-				console.log('Drawing sample Bat pattern...');
-				
-				clearAllPatterns();
-				
-				const range = chart.getVisibleRange();
-				const currentTime = range.to;
-				const timeSpan = range.to - range.from;
-				
-				// Bat pattern points (bullish)
-				const basePrice = 145;
-				const points = [
-					{ time: currentTime - (timeSpan * 0.8), price: basePrice },      // X
-					{ time: currentTime - (timeSpan * 0.6), price: basePrice + 20 }, // A
-					{ time: currentTime - (timeSpan * 0.4), price: basePrice + 8 },  // B (38.2% retracement)
-					{ time: currentTime - (timeSpan * 0.2), price: basePrice + 15 }, // C
-					{ time: currentTime - (timeSpan * 0.05), price: basePrice + 2 }  // D (88.6% of XA)
-				];
-
-				// Draw bat pattern
-				for (let i = 0; i < points.length - 1; i++) {
-					chart.createMultipointShape([
-						{ time: points[i].time, price: points[i].price },
-						{ time: points[i + 1].time, price: points[i + 1].price }
-					], {
-						shape: "trend_line",
-						overrides: {
-							linecolor: "#45B7D1",
-							linewidth: 3,
-							linestyle: 0
-						},
-						zOrder: "top"
-					}).then(shapeId => {
-						if (shapeId) shapeIds.push(shapeId);
-					});
+			// Add potential reversal zone rectangle
+			chart.createMultipointShape([
+				{ time: points[4].time - (timeSpan * 0.02), price: points[4].price - 1 },
+				{ time: points[4].time + (timeSpan * 0.02), price: points[4].price + 1 }
+			], {
+				shape: "rectangle",
+				overrides: {
+					color: "#FFD700",
+					transparency: 80,
+					borderColor: "#FFD700",
+					borderWidth: 2
+				},
+				zOrder: "bottom"
+			}).then(rectId => {
+				if (rectId) {
+					shapeIds.push(rectId);
+					console.log('Reversal zone created:', rectId);
 				}
+			}).catch(error => {
+				console.error('Error creating reversal zone:', error);
+			});
 
-				// Add labels
-				const labels = ['X', 'A', 'B', 'C', 'D'];
-				points.forEach((point, index) => {
-					chart.createMultipointShape([{ time: point.time, price: point.price }], {
-						shape: "text",
-						text: labels[index],
-						overrides: {
-							color: "#FFFFFF",
-							fontsize: 14,
-							bold: true,
-							backgroundColor: "#45B7D1"
-						},
-						zOrder: "top"
-					}).then(textId => {
-						if (textId) shapeIds.push(textId);
-					});
-				});
+			console.log('CORRECT Gartley pattern drawing completed');
+		}
 
-				chart.createMultipointShape([{ time: points[4].time, price: points[4].price + 3 }], {
-					shape: "text",
-					text: "🦇 BAT PATTERN",
+		function drawGartleyWithAllLines() {
+			if (!widget || !widget.chart()) return;
+
+			const chart = widget.chart();
+			console.log('Drawing COMPLETE Gartley pattern with ALL lines...');
+
+			clearAllPatterns();
+
+			const range = chart.getVisibleRange();
+			const currentTime = range.to;
+			const timeSpan = range.to - range.from;
+
+			// PROPER Gartley ratios
+			const basePrice = 150;
+			const XA_move = 20;
+
+			const points = [
+				{ time: currentTime - (timeSpan * 0.8), price: basePrice },                    // X
+				{ time: currentTime - (timeSpan * 0.6), price: basePrice + XA_move },         // A  
+				{ time: currentTime - (timeSpan * 0.4), price: basePrice + (XA_move * 0.382) }, // B (61.8% of XA)
+				{ time: currentTime - (timeSpan * 0.2), price: basePrice + (XA_move * 0.618) }, // C 
+				{ time: currentTime - (timeSpan * 0.05), price: basePrice + (XA_move * 0.786) } // D (78.6% of XA)
+			];
+
+			// ALL the lines that make up a Gartley pattern:
+			const allLines = [
+				// Main structure (thick lines)
+				{ from: 0, to: 1, color: '#FF6B6B', width: 4, style: 0, label: 'XA' },
+				{ from: 1, to: 2, color: '#4ECDC4', width: 4, style: 0, label: 'AB' },
+				{ from: 2, to: 3, color: '#45B7D1', width: 4, style: 0, label: 'BC' },
+				{ from: 3, to: 4, color: '#96CEB4', width: 4, style: 0, label: 'CD' },
+
+				// Internal structure (dashed lines)
+				{ from: 0, to: 2, color: '#FFD700', width: 2, style: 2, label: 'XB' },
+				{ from: 1, to: 3, color: '#FF69B4', width: 2, style: 2, label: 'AC' },
+				{ from: 0, to: 4, color: '#FF4444', width: 3, style: 1, label: 'XD' },
+
+				// Completion lines (dotted)
+				{ from: 2, to: 4, color: '#00FF00', width: 2, style: 3, label: 'BD' },
+				{ from: 1, to: 4, color: '#FF8C00', width: 2, style: 3, label: 'AD' }
+			];
+
+			// Draw all lines
+			allLines.forEach((line, index) => {
+				chart.createMultipointShape([
+					{ time: points[line.from].time, price: points[line.from].price },
+					{ time: points[line.to].time, price: points[line.to].price }
+				], {
+					shape: "trend_line",
 					overrides: {
-						color: "#45B7D1",
-						fontsize: 16,
-						bold: true,
-						backgroundColor: "#000000"
+						linecolor: line.color,
+						linewidth: line.width,
+						linestyle: line.style,
+						transparency: line.style > 0 ? 40 : 0
 					},
 					zOrder: "top"
-				}).then(titleId => {
-					if (titleId) shapeIds.push(titleId);
+				}).then(shapeId => {
+					if (shapeId) shapeIds.push(shapeId);
+					console.log(`${line.label} line created`);
+				});
+			});
+
+			// Add enhanced point labels
+			const enhancedLabels = [
+				{ text: 'X\n(Start)', color: '#FFFFFF', bg: '#FF6B6B' },
+				{ text: 'A\n(100%)', color: '#FFFFFF', bg: '#4ECDC4' },
+				{ text: 'B\n(61.8%)', color: '#FFFFFF', bg: '#45B7D1' },
+				{ text: 'C\n(38.2-88.6%)', color: '#FFFFFF', bg: '#96CEB4' },
+				{ text: 'D\n(78.6%)', color: '#FFFFFF', bg: '#FFD700' }
+			];
+
+			points.forEach((point, index) => {
+				chart.createMultipointShape([{ time: point.time, price: point.price }], {
+					shape: "text",
+					text: enhancedLabels[index].text,
+					overrides: {
+						color: enhancedLabels[index].color,
+						fontsize: 11,
+						bold: true,
+						backgroundColor: enhancedLabels[index].bg,
+						backgroundTransparency: 0
+					},
+					zOrder: "top"
+				}).then(textId => {
+					if (textId) shapeIds.push(textId);
+				});
+			});
+
+			// Add comprehensive pattern info
+			chart.createMultipointShape([{ time: points[4].time, price: points[4].price + 4 }], {
+				shape: "text",
+				text: "🦋 COMPLETE GARTLEY PATTERN\n✓ AB = 61.8% of XA\n✓ BC = 38.2-88.6% of AB\n✓ CD = 127.2-161.8% of BC\n✓ D = 78.6% of XA\nPRZ: Potential Reversal Zone",
+				overrides: {
+					color: "#FFFFFF",
+					fontsize: 12,
+					bold: true,
+					backgroundColor: "#000000",
+					backgroundTransparency: 10
+				},
+				zOrder: "top"
+			}).then(titleId => {
+				if (titleId) shapeIds.push(titleId);
+			});
+
+			console.log('COMPLETE Gartley pattern with all lines drawn');
+		}
+		if (!widget || !widget.chart()) return;
+
+		const chart = widget.chart();
+		console.log('Drawing sample Butterfly pattern...');
+
+		clearAllPatterns();
+
+		const range = chart.getVisibleRange();
+		const currentTime = range.to;
+		const timeSpan = range.to - range.from;
+
+		// Butterfly pattern points (bearish)
+		const basePrice = 160;
+		const points = [
+			{ time: currentTime - (timeSpan * 0.8), price: basePrice + 10 }, // X (start high)
+			{ time: currentTime - (timeSpan * 0.6), price: basePrice - 5 },  // A (low)
+			{ time: currentTime - (timeSpan * 0.4), price: basePrice + 2 },  // B (78.6% retracement)
+			{ time: currentTime - (timeSpan * 0.2), price: basePrice - 2 },  // C (retracement)
+			{ time: currentTime - (timeSpan * 0.05), price: basePrice + 15 } // D (127% extension)
+		];
+
+		// Draw butterfly pattern
+		for (let i = 0; i < points.length - 1; i++) {
+			chart.createMultipointShape([
+				{ time: points[i].time, price: points[i].price },
+				{ time: points[i + 1].time, price: points[i + 1].price }
+			], {
+				shape: "trend_line",
+				overrides: {
+					linecolor: "#4ECDC4",
+					linewidth: 3,
+					linestyle: 0
+				},
+				zOrder: "top"
+			}).then(shapeId => {
+				if (shapeId) shapeIds.push(shapeId);
+			});
+		}
+
+		// Add labels
+		const labels = ['X', 'A', 'B', 'C', 'D'];
+		points.forEach((point, index) => {
+			chart.createMultipointShape([{ time: point.time, price: point.price }], {
+				shape: "text",
+				text: labels[index],
+				overrides: {
+					color: "#FFFFFF",
+					fontsize: 14,
+					bold: true,
+					backgroundColor: "#4ECDC4"
+				},
+				zOrder: "top"
+			}).then(textId => {
+				if (textId) shapeIds.push(textId);
+			});
+		});
+
+		chart.createMultipointShape([{ time: points[4].time, price: points[4].price + 3 }], {
+			shape: "text",
+			text: "🦋 BUTTERFLY PATTERN",
+			overrides: {
+				color: "#4ECDC4",
+				fontsize: 16,
+				bold: true,
+				backgroundColor: "#000000"
+			},
+			zOrder: "top"
+		}).then(titleId => {
+			if (titleId) shapeIds.push(titleId);
+		});
+			}
+
+		function drawSampleBatPattern() {
+			if (!widget || !widget.chart()) return;
+
+			const chart = widget.chart();
+			console.log('Drawing sample Bat pattern...');
+
+			clearAllPatterns();
+
+			const range = chart.getVisibleRange();
+			const currentTime = range.to;
+			const timeSpan = range.to - range.from;
+
+			// Bat pattern points (bullish)
+			const basePrice = 145;
+			const points = [
+				{ time: currentTime - (timeSpan * 0.8), price: basePrice },      // X
+				{ time: currentTime - (timeSpan * 0.6), price: basePrice + 20 }, // A
+				{ time: currentTime - (timeSpan * 0.4), price: basePrice + 8 },  // B (38.2% retracement)
+				{ time: currentTime - (timeSpan * 0.2), price: basePrice + 15 }, // C
+				{ time: currentTime - (timeSpan * 0.05), price: basePrice + 2 }  // D (88.6% of XA)
+			];
+
+			// Draw bat pattern
+			for (let i = 0; i < points.length - 1; i++) {
+				chart.createMultipointShape([
+					{ time: points[i].time, price: points[i].price },
+					{ time: points[i + 1].time, price: points[i + 1].price }
+				], {
+					shape: "trend_line",
+					overrides: {
+						linecolor: "#45B7D1",
+						linewidth: 3,
+						linestyle: 0
+					},
+					zOrder: "top"
+				}).then(shapeId => {
+					if (shapeId) shapeIds.push(shapeId);
 				});
 			}
 
-			function clearAllPatterns() {
-				if (!widget || !widget.chart()) return;
-				
-				console.log('Clearing all patterns...');
-				
-				try {
-					// Method 1: Remove tracked shapes
-					shapeIds.forEach(shapeId => {
-						try {
-							if (shapeId && typeof shapeId.remove === 'function') {
-								shapeId.remove();
-							}
-						} catch (e) {
-							console.log('Could not remove shape:', e);
+			// Add labels
+			const labels = ['X', 'A', 'B', 'C', 'D'];
+			points.forEach((point, index) => {
+				chart.createMultipointShape([{ time: point.time, price: point.price }], {
+					shape: "text",
+					text: labels[index],
+					overrides: {
+						color: "#FFFFFF",
+						fontsize: 14,
+						bold: true,
+						backgroundColor: "#45B7D1"
+					},
+					zOrder: "top"
+				}).then(textId => {
+					if (textId) shapeIds.push(textId);
+				});
+			});
+
+			chart.createMultipointShape([{ time: points[4].time, price: points[4].price + 3 }], {
+				shape: "text",
+				text: "🦇 BAT PATTERN",
+				overrides: {
+					color: "#45B7D1",
+					fontsize: 16,
+					bold: true,
+					backgroundColor: "#000000"
+				},
+				zOrder: "top"
+			}).then(titleId => {
+				if (titleId) shapeIds.push(titleId);
+			});
+		}
+
+		function clearAllPatterns() {
+			if (!widget || !widget.chart()) return;
+
+			console.log('Clearing all patterns...');
+
+			try {
+				// Method 1: Remove tracked shapes
+				shapeIds.forEach(shapeId => {
+					try {
+						if (shapeId && typeof shapeId.remove === 'function') {
+							shapeId.remove();
 						}
-					});
-					shapeIds = [];
-					
-					// Method 2: Clear all shapes
-					widget.chart().removeAllShapes();
-					
-					console.log('All patterns cleared');
-				} catch (error) {
-					console.error('Error clearing patterns:', error);
-				}
-			}
-
-			function initOnReady() {
-				var datafeedUrl = "https://demo-feed-data.tradingview.com";
-				var customDataUrl = getParameterByName('dataUrl');
-				if (customDataUrl !== "") {
-					datafeedUrl = customDataUrl.startsWith('https://') ? customDataUrl : `https://${customDataUrl}`;
-				}
-
-				widget = window.tvWidget = new TradingView.widget({
-					debug: true, // Enable debug mode
-					fullscreen: true,
-					symbol: 'AAPL',
-					interval: '1D',
-					container: "tv_chart_container",
-					datafeed: new Datafeeds.UDFCompatibleDatafeed(datafeedUrl, undefined, {
-						maxResponseLength: 1000,
-						expectedOrder: 'latestFirst',
-					}),
-					library_path: "charting_library/",
-					locale: getParameterByName('lang') || "en",
-					disabled_features: ["use_localstorage_for_settings"],
-					enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
-					charts_storage_url: 'https://saveload.tradingview.com',
-					charts_storage_api_version: "1.1",
-					client_id: 'tradingview.com',
-					user_id: 'public_user_id',
-					theme: getParameterByName('theme') || 'dark',
-					overrides: {
-						"paneProperties.background": "#131722",
-						"paneProperties.vertGridProperties.color": "#363c4e",
-						"paneProperties.horzGridProperties.color": "#363c4e",
-						"mainSeriesProperties.candleStyle.upColor": "#4CAF50",
-						"mainSeriesProperties.candleStyle.downColor": "#F44336",
-						"mainSeriesProperties.candleStyle.wickUpColor": "#4CAF50",
-						"mainSeriesProperties.candleStyle.wickDownColor": "#F44336"
+					} catch (e) {
+						console.log('Could not remove shape:', e);
 					}
 				});
+				shapeIds = [];
 
-				widget.onChartReady(() => {
-					console.log('Chart is ready! You can now draw patterns.');
-					
-					// Wait a bit more to ensure chart is fully loaded
-					setTimeout(() => {
-						console.log('Chart fully initialized - ready for pattern drawing');
-						
-						// Auto-draw a sample Gartley pattern after 2 seconds
-						setTimeout(() => {
-							console.log('Auto-drawing sample Gartley pattern...');
-							drawSampleGartleyPattern();
-						}, 2000);
-					}, 1000);
-				});
+				// Method 2: Clear all shapes
+				widget.chart().removeAllShapes();
 
-				window.frames[0].focus();
+				console.log('All patterns cleared');
+			} catch (error) {
+				console.error('Error clearing patterns:', error);
+			}
+		}
+
+		function initOnReady() {
+			var datafeedUrl = "https://demo-feed-data.tradingview.com";
+			var customDataUrl = getParameterByName('dataUrl');
+			if (customDataUrl !== "") {
+				datafeedUrl = customDataUrl.startsWith('https://') ? customDataUrl : `https://${customDataUrl}`;
 			}
 
-			window.addEventListener('DOMContentLoaded', initOnReady, false);
-		</script>
-	</head>
+			widget = window.tvWidget = new TradingView.widget({
+				debug: true, // Enable debug mode
+				fullscreen: true,
+				symbol: 'AAPL',
+				interval: '1D',
+				container: "tv_chart_container",
+				datafeed: new Datafeeds.UDFCompatibleDatafeed(datafeedUrl, undefined, {
+					maxResponseLength: 1000,
+					expectedOrder: 'latestFirst',
+				}),
+				library_path: "charting_library/",
+				locale: getParameterByName('lang') || "en",
+				disabled_features: ["use_localstorage_for_settings"],
+				enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
+				charts_storage_url: 'https://saveload.tradingview.com',
+				charts_storage_api_version: "1.1",
+				client_id: 'tradingview.com',
+				user_id: 'public_user_id',
+				theme: getParameterByName('theme') || 'dark',
+				overrides: {
+					"paneProperties.background": "#131722",
+					"paneProperties.vertGridProperties.color": "#363c4e",
+					"paneProperties.horzGridProperties.color": "#363c4e",
+					"mainSeriesProperties.candleStyle.upColor": "#4CAF50",
+					"mainSeriesProperties.candleStyle.downColor": "#F44336",
+					"mainSeriesProperties.candleStyle.wickUpColor": "#4CAF50",
+					"mainSeriesProperties.candleStyle.wickDownColor": "#F44336"
+				}
+			});
 
-	<body>
-		<div id="tv_chart_container"></div>
-		
-		<div class="controls">
-			<h3>🔍 Harmonic Pattern Tester</h3>
-			
-			<button class="pattern-button" onclick="drawSampleGartleyPattern()">
-				🦋 Draw CORRECT Gartley Pattern
-			</button>
-			
-			<button class="pattern-button" onclick="drawGartleyWithAllLines()">
-				🎯 Draw Complete Gartley Structure
-			</button>
-			
-			<button class="pattern-button" onclick="drawSampleButterflyPattern()">
-				🦋 Draw Butterfly Pattern
-			</button>
-			
-			<button class="pattern-button" onclick="drawSampleBatPattern()">
-				🦇 Draw Bat Pattern
-			</button>
-			
-			<button class="pattern-button clear-button" onclick="clearAllPatterns()">
-				🗑️ Clear All Patterns
-			</button>
-			
-			<div class="info">
-				<strong>Test the pattern drawing:</strong><br>
-				• Click any pattern button to draw it<br>
-				• Patterns will appear on the chart<br>
-				• Use Clear to remove all patterns<br>
-				• Check browser console for debug info
-			</div>
+			widget.onChartReady(() => {
+				console.log('Chart is ready! You can now draw patterns.');
+
+				// Wait a bit more to ensure chart is fully loaded
+				setTimeout(() => {
+					console.log('Chart fully initialized - ready for pattern drawing');
+
+					// Auto-draw a sample Gartley pattern after 2 seconds
+					setTimeout(() => {
+						console.log('Auto-drawing sample Gartley pattern...');
+						drawSampleGartleyPattern();
+					}, 2000);
+				}, 1000);
+			});
+
+			window.frames[0].focus();
+		}
+
+		window.addEventListener('DOMContentLoaded', initOnReady, false);
+	</script>
+</head>
+
+<body>
+	<div id="tv_chart_container"></div>
+
+	<div class="controls">
+		<h3>🔍 Harmonic Pattern Tester</h3>
+
+		<button class="pattern-button" onclick="drawSampleGartleyPattern()">
+			🦋 Draw CORRECT Gartley Pattern
+		</button>
+
+		<button class="pattern-button" onclick="drawGartleyWithAllLines()">
+			🎯 Draw Complete Gartley Structure
+		</button>
+
+		<button class="pattern-button" onclick="drawSampleButterflyPattern()">
+			🦋 Draw Butterfly Pattern
+		</button>
+
+		<button class="pattern-button" onclick="drawSampleBatPattern()">
+			🦇 Draw Bat Pattern
+		</button>
+
+		<button class="pattern-button clear-button" onclick="clearAllPatterns()">
+			🗑️ Clear All Patterns
+		</button>
+
+		<div class="info">
+			<strong>Test the pattern drawing:</strong><br>
+			• Click any pattern button to draw it<br>
+			• Patterns will appear on the chart<br>
+			• Use Clear to remove all patterns<br>
+			• Check browser console for debug info
 		</div>
-	</body>
+	</div>
+</body>
+
 </html>

@@ -1,57 +1,133 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
     <title>Working Gartley Scanner</title>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
     <script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
     <script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
-    
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #131722; color: #d1d4dc; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #131722;
+            color: #d1d4dc;
+        }
+
         .toolbar {
-            position: fixed; top: 0; left: 0; right: 0; height: 50px;
-            background: #1e222d; border-bottom: 1px solid #2a2e39;
-            display: flex; align-items: center; padding: 0 20px; z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #1e222d;
+            border-bottom: 1px solid #2a2e39;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
         }
-        
-        .logo { color: #2962ff; font-size: 18px; font-weight: bold; margin-right: 30px; }
-        
+
+        .logo {
+            color: #2962ff;
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 30px;
+        }
+
         .scan-btn {
-            background: #2962ff; color: white; border: none; border-radius: 6px;
-            padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer;
-            margin-right: 15px; transition: all 0.2s ease;
+            background: #2962ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 15px;
+            transition: all 0.2s ease;
         }
-        .scan-btn:hover { background: #1e53e5; }
-        
+
+        .scan-btn:hover {
+            background: #1e53e5;
+        }
+
         .clear-btn {
-            background: transparent; color: #d1d4dc; border: 1px solid #3a3e49;
-            border-radius: 6px; padding: 10px 20px; font-size: 14px; cursor: pointer;
-            margin-right: 15px; transition: all 0.2s ease;
+            background: transparent;
+            color: #d1d4dc;
+            border: 1px solid #3a3e49;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 15px;
+            transition: all 0.2s ease;
         }
-        .clear-btn:hover { background: #2a2e39; }
-        
-        .status { margin-left: auto; font-size: 13px; color: #868993; }
-        .status.success { color: #4caf50; }
-        .status.error { color: #f44336; }
-        
-        #chart-container { position: relative; width: 100%; height: calc(100vh - 50px); margin-top: 50px; }
-        #tv_chart_container { width: 100%; height: 100%; }
-        
+
+        .clear-btn:hover {
+            background: #2a2e39;
+        }
+
+        .status {
+            margin-left: auto;
+            font-size: 13px;
+            color: #868993;
+        }
+
+        .status.success {
+            color: #4caf50;
+        }
+
+        .status.error {
+            color: #f44336;
+        }
+
+        #chart-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 50px);
+            margin-top: 50px;
+        }
+
+        #tv_chart_container {
+            width: 100%;
+            height: 100%;
+        }
+
         /* Canvas overlay for drawing lines */
         #pattern-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
         }
-        
+
         .pattern-info {
-            position: absolute; top: 20px; left: 20px; 
-            background: rgba(30, 34, 45, 0.9); border: 1px solid #3a3e49;
-            border-radius: 8px; padding: 15px; color: #d1d4dc;
-            font-size: 14px; display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(30, 34, 45, 0.9);
+            border: 1px solid #3a3e49;
+            border-radius: 8px;
+            padding: 15px;
+            color: #d1d4dc;
+            font-size: 14px;
+            display: none;
         }
-        .pattern-info h3 { color: #00FF00; margin-bottom: 10px; }
+
+        .pattern-info h3 {
+            color: #00FF00;
+            margin-bottom: 10px;
+        }
     </style>
 
     <script>
@@ -76,19 +152,19 @@
         function initCanvas() {
             canvas = document.getElementById('pattern-overlay');
             ctx = canvas.getContext('2d');
-            
+
             // Set canvas size
             function resizeCanvas() {
                 const container = document.getElementById('chart-container');
                 canvas.width = container.clientWidth;
                 canvas.height = container.clientHeight;
-                
+
                 // Redraw pattern if exists
                 if (realPattern && chartAPI) {
                     drawDynamicPattern();
                 }
             }
-            
+
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
         }
@@ -106,43 +182,43 @@
                 // Create a proper Gartley pattern using realistic AAPL swing points
                 const now = Math.floor(Date.now() / 1000);
                 const dayInSeconds = 24 * 60 * 60;
-                
+
                 // Create simple, visible pattern with recent dates
                 const pattern = {
                     name: 'Gartley',
                     direction: 'Bullish',
                     confidence: 89,
                     points: [
-                        { 
-                            label: 'X', 
+                        {
+                            label: 'X',
                             time: now - (7 * dayInSeconds), // 1 week ago
                             price: 215.50,
                             type: 'swing_high',
                             candlestick: 'high'
                         },
-                        { 
-                            label: 'A', 
+                        {
+                            label: 'A',
                             time: now - (6 * dayInSeconds), // 6 days ago
                             price: 200.30,
                             type: 'swing_low',
                             candlestick: 'low'
                         },
-                        { 
-                            label: 'B', 
+                        {
+                            label: 'B',
                             time: now - (4 * dayInSeconds), // 4 days ago
                             price: 209.80,
                             type: 'swing_high',
                             candlestick: 'high'
                         },
-                        { 
-                            label: 'C', 
+                        {
+                            label: 'C',
                             time: now - (3 * dayInSeconds), // 3 days ago
                             price: 206.20,
                             type: 'swing_low',
                             candlestick: 'low'
                         },
-                        { 
-                            label: 'D', 
+                        {
+                            label: 'D',
                             time: now - (1 * dayInSeconds), // 1 day ago
                             price: 202.40,
                             type: 'completion_point',
@@ -157,7 +233,7 @@
                 const BC_retrace = Math.abs(pattern.points[3].price - pattern.points[2].price); // 209.78 - 204.24 = 5.54
                 const CD_move = Math.abs(pattern.points[4].price - pattern.points[3].price); // 204.24 - 197.85 = 6.39
                 const AD_retrace = Math.abs(pattern.points[4].price - pattern.points[1].price); // 197.85 - 195.30 = 2.55
-                
+
                 pattern.ratios = {
                     AB_XA: (AB_retrace / XA_move).toFixed(3), // Should be ~0.618
                     BC_AB: (BC_retrace / AB_retrace).toFixed(3), // Should be ~0.382-0.886
@@ -166,7 +242,7 @@
                 };
 
                 console.log('Gartley pattern ratios:', pattern.ratios);
-                console.log('Pattern points on candlesticks:', pattern.points.map(p => 
+                console.log('Pattern points on candlesticks:', pattern.points.map(p =>
                     `${p.label}: ${p.candlestick} of candle at $${p.price} (${new Date(p.time * 1000).toLocaleDateString()})`
                 ));
 
@@ -187,9 +263,9 @@
 
             try {
                 console.log('Drawing simple Gartley pattern...');
-                
+
                 const points = realPattern.points;
-                
+
                 // Use the simplest possible approach - create individual trend lines
                 const createLine = (point1, point2, color = '#00FF41', width = 2) => {
                     try {
@@ -199,7 +275,7 @@
                                 value: point1.price
                             },
                             point2: {
-                                time: point2.time, 
+                                time: point2.time,
                                 value: point2.price
                             },
                             options: {
@@ -240,10 +316,10 @@
 
                 console.log('Pattern lines drawn successfully');
                 updateStatus('✅ Gartley pattern drawn on chart!', 'success');
-                
+
             } catch (error) {
                 console.error('Error drawing pattern:', error);
-                
+
                 // Ultimate fallback - use study/indicator approach
                 try {
                     console.log('Trying indicator fallback...');
@@ -258,35 +334,35 @@
 
         function scanPatterns() {
             updateStatus('Scanning for Gartley patterns on candlesticks...', 'info');
-            
+
             // Find real pattern based on candlestick swing points
             realPattern = findGartleyOnChart();
-            
+
             if (!realPattern) {
                 updateStatus('No Gartley pattern found', 'error');
                 return;
             }
-            
+
             console.log('Pattern found:', realPattern);
-            
+
             // Draw pattern directly on the chart using TradingView's native tools
             drawGartleyOnChart();
-            
+
             // Show pattern info
             showPatternInfo();
-            
+
             // Set up chart event listeners for real-time updates
             setupChartListeners();
         }
 
         function setupChartListeners() {
             if (!chartAPI) return;
-            
+
             try {
                 // Note: Chart shapes drawn with createShape() automatically move with the chart
                 // No additional listeners needed as TradingView handles this natively
                 console.log('Chart listeners set up - patterns will move automatically with chart');
-                
+
             } catch (error) {
                 console.error('Error setting up chart listeners:', error);
             }
@@ -301,12 +377,12 @@
                     console.error('Error clearing shapes:', error);
                 }
             }
-            
+
             // Clear canvas if it exists
             if (ctx && canvas) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
-            
+
             realPattern = null;
             hidePatternInfo();
             updateStatus('Patterns cleared', 'info');
@@ -314,11 +390,11 @@
 
         function showPatternInfo() {
             if (!realPattern) return;
-            
+
             const infoDiv = document.querySelector('.pattern-info');
             const entryPoint = realPattern.points[4]; // D point
             const entryDate = new Date(entryPoint.time * 1000).toLocaleDateString();
-            
+
             infoDiv.innerHTML = `
                 <h3>🦋 Gartley Pattern Detected</h3>
                 <p><strong>Direction:</strong> ${realPattern.direction}</p>
@@ -363,7 +439,7 @@
                 chartAPI = widget.chart();
                 updateStatus('Chart loaded - Automatically scanning for Gartley pattern...', 'info');
                 initCanvas();
-                
+
                 // Automatically scan for pattern after a short delay
                 setTimeout(() => {
                     scanPatterns();
@@ -386,10 +462,11 @@
     <div id="chart-container">
         <div id="tv_chart_container"></div>
         <canvas id="pattern-overlay"></canvas>
-        
+
         <div class="pattern-info">
             <!-- Pattern info will be shown here -->
         </div>
     </div>
 </body>
+
 </html>

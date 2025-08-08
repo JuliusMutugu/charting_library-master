@@ -1,610 +1,618 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-		<title>TradingView - Candlestick-Based Harmonic Pattern Scanner</title>
-		
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
-		
-		<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
-		<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
-		
-		<style>
-			body {
-				margin: 0px;
-				font-family: Arial, sans-serif;
-				background: #131722;
-				color: #d1d4dc;
-			}
-			
-			.controls {
-				position: fixed;
-				top: 10px;
-				right: 10px;
-				background: rgba(19, 23, 34, 0.95);
-				border: 1px solid #2a2e39;
-				padding: 15px;
-				border-radius: 8px;
-				z-index: 1000;
-				max-width: 350px;
-			}
-			
-			.pattern-button {
-				display: block;
-				width: 100%;
-				margin: 5px 0;
-				padding: 12px;
-				background: #2a2e39;
-				color: white;
-				border: 1px solid #434651;
-				border-radius: 4px;
-				cursor: pointer;
-				font-size: 13px;
-			}
-			
-			.pattern-button:hover {
-				background: #363a45;
-			}
-			
-			.pattern-button.active {
-				background: #1976d2;
-			}
-			
-			.pattern-button.scanning {
-				background: #ff9800;
-				animation: pulse 1.5s infinite;
-			}
-			
-			@keyframes pulse {
-				0%, 100% { opacity: 1; }
-				50% { opacity: 0.7; }
-			}
-			
-			.clear-button {
-				background: #f44336 !important;
-			}
-			
-			.status {
-				margin: 10px 0;
-				padding: 10px;
-				background: #2a2e39;
-				border-radius: 4px;
-				font-size: 12px;
-				border-left: 3px solid #4CAF50;
-			}
-			
-			.data-info {
-				margin: 10px 0;
-				padding: 8px;
-				background: #1a1e27;
-				border-radius: 4px;
-				font-size: 11px;
-				color: #9598a1;
-			}
-			
-			.pattern-results {
-				margin-top: 15px;
-				max-height: 250px;
-				overflow-y: auto;
-			}
-			
-			.pattern-item {
-				background: #2a2e39;
-				border: 1px solid #434651;
-				border-radius: 4px;
-				padding: 10px;
-				margin: 5px 0;
-				font-size: 12px;
-			}
-			
-			.pattern-name {
-				font-weight: bold;
-				color: #4CAF50;
-				margin-bottom: 5px;
-			}
-			
-			.pattern-details {
-				color: #9598a1;
-				line-height: 1.4;
-			}
-		</style>
 
-		<script type="text/javascript">
-			let widget;
-			let shapeIds = [];
-			let currentPatterns = [];
-			let chartData = [];
-			let isScanning = false;
+<head>
+	<title>TradingView - Candlestick-Based Harmonic Pattern Scanner</title>
 
-			// Candlestick-based Harmonic Pattern Detector
-			class CandlestickPatternDetector {
-				constructor() {
-					this.minSwingSize = 5; // Minimum bars for swing detection
-					this.patternDefinitions = {
-						gartley: {
-							name: 'Gartley',
-							color: '#2196F3',
-							ratios: {
-								AB_XA: { min: 0.618, max: 0.618, tolerance: 0.05 },
-								BC_AB: { min: 0.382, max: 0.886, tolerance: 0.05 },
-								CD_BC: { min: 1.13, max: 1.618, tolerance: 0.1 },
-								AD_XA: { min: 0.786, max: 0.786, tolerance: 0.05 }
-							}
-						},
-						butterfly: {
-							name: 'Butterfly',
-							color: '#FF9800',
-							ratios: {
-								AB_XA: { min: 0.786, max: 0.786, tolerance: 0.05 },
-								BC_AB: { min: 0.382, max: 0.886, tolerance: 0.05 },
-								CD_BC: { min: 1.618, max: 2.618, tolerance: 0.1 },
-								AD_XA: { min: 1.27, max: 1.618, tolerance: 0.1 }
-							}
-						},
-						bat: {
-							name: 'Bat',
-							color: '#9C27B0',
-							ratios: {
-								AB_XA: { min: 0.382, max: 0.5, tolerance: 0.05 },
-								BC_AB: { min: 0.382, max: 0.886, tolerance: 0.05 },
-								CD_BC: { min: 1.618, max: 2.618, tolerance: 0.1 },
-								AD_XA: { min: 0.886, max: 0.886, tolerance: 0.05 }
-							}
-						},
-						crab: {
-							name: 'Crab',
-							color: '#F44336',
-							ratios: {
-								AB_XA: { min: 0.382, max: 0.618, tolerance: 0.05 },
-								BC_AB: { min: 0.382, max: 0.886, tolerance: 0.05 },
-								CD_BC: { min: 2.24, max: 3.618, tolerance: 0.2 },
-								AD_XA: { min: 1.618, max: 1.618, tolerance: 0.1 }
-							}
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+
+	<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
+	<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
+
+	<style>
+		body {
+			margin: 0px;
+			font-family: Arial, sans-serif;
+			background: #131722;
+			color: #d1d4dc;
+		}
+
+		.controls {
+			position: fixed;
+			top: 10px;
+			right: 10px;
+			background: rgba(19, 23, 34, 0.95);
+			border: 1px solid #2a2e39;
+			padding: 15px;
+			border-radius: 8px;
+			z-index: 1000;
+			max-width: 350px;
+		}
+
+		.pattern-button {
+			display: block;
+			width: 100%;
+			margin: 5px 0;
+			padding: 12px;
+			background: #2a2e39;
+			color: white;
+			border: 1px solid #434651;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 13px;
+		}
+
+		.pattern-button:hover {
+			background: #363a45;
+		}
+
+		.pattern-button.active {
+			background: #1976d2;
+		}
+
+		.pattern-button.scanning {
+			background: #ff9800;
+			animation: pulse 1.5s infinite;
+		}
+
+		@keyframes pulse {
+
+			0%,
+			100% {
+				opacity: 1;
+			}
+
+			50% {
+				opacity: 0.7;
+			}
+		}
+
+		.clear-button {
+			background: #f44336 !important;
+		}
+
+		.status {
+			margin: 10px 0;
+			padding: 10px;
+			background: #2a2e39;
+			border-radius: 4px;
+			font-size: 12px;
+			border-left: 3px solid #4CAF50;
+		}
+
+		.data-info {
+			margin: 10px 0;
+			padding: 8px;
+			background: #1a1e27;
+			border-radius: 4px;
+			font-size: 11px;
+			color: #9598a1;
+		}
+
+		.pattern-results {
+			margin-top: 15px;
+			max-height: 250px;
+			overflow-y: auto;
+		}
+
+		.pattern-item {
+			background: #2a2e39;
+			border: 1px solid #434651;
+			border-radius: 4px;
+			padding: 10px;
+			margin: 5px 0;
+			font-size: 12px;
+		}
+
+		.pattern-name {
+			font-weight: bold;
+			color: #4CAF50;
+			margin-bottom: 5px;
+		}
+
+		.pattern-details {
+			color: #9598a1;
+			line-height: 1.4;
+		}
+	</style>
+
+	<script type="text/javascript">
+		let widget;
+		let shapeIds = [];
+		let currentPatterns = [];
+		let chartData = [];
+		let isScanning = false;
+
+		// Candlestick-based Harmonic Pattern Detector
+		class CandlestickPatternDetector {
+			constructor() {
+				this.minSwingSize = 5; // Minimum bars for swing detection
+				this.patternDefinitions = {
+					gartley: {
+						name: 'Gartley',
+						color: '#2196F3',
+						ratios: {
+							AB_XA: { min: 0.618, max: 0.618, tolerance: 0.05 },
+							BC_AB: { min: 0.382, max: 0.886, tolerance: 0.05 },
+							CD_BC: { min: 1.13, max: 1.618, tolerance: 0.1 },
+							AD_XA: { min: 0.786, max: 0.786, tolerance: 0.05 }
 						}
-					};
-				}
-
-				// Find swing highs and lows from candlestick data
-				findSwingPoints(candlesticks) {
-					const swings = [];
-					const bars = candlesticks.length;
-					
-					if (bars < this.minSwingSize * 2 + 1) return swings;
-
-					for (let i = this.minSwingSize; i < bars - this.minSwingSize; i++) {
-						const current = candlesticks[i];
-						let isSwingHigh = true;
-						let isSwingLow = true;
-						
-						// Check surrounding candlesticks
-						for (let j = i - this.minSwingSize; j <= i + this.minSwingSize; j++) {
-							if (j !== i) {
-								const bar = candlesticks[j];
-								if (bar.high >= current.high) isSwingHigh = false;
-								if (bar.low <= current.low) isSwingLow = false;
-							}
+					},
+					butterfly: {
+						name: 'Butterfly',
+						color: '#FF9800',
+						ratios: {
+							AB_XA: { min: 0.786, max: 0.786, tolerance: 0.05 },
+							BC_AB: { min: 0.382, max: 0.886, tolerance: 0.05 },
+							CD_BC: { min: 1.618, max: 2.618, tolerance: 0.1 },
+							AD_XA: { min: 1.27, max: 1.618, tolerance: 0.1 }
 						}
-						
-						if (isSwingHigh && !isSwingLow) {
-							swings.push({
-								index: i,
-								time: current.time,
-								price: current.high,
-								type: 'high',
-								candlestick: current
-							});
-						} else if (isSwingLow && !isSwingHigh) {
-							swings.push({
-								index: i,
-								time: current.time,
-								price: current.low,
-								type: 'low',
-								candlestick: current
-							});
+					},
+					bat: {
+						name: 'Bat',
+						color: '#9C27B0',
+						ratios: {
+							AB_XA: { min: 0.382, max: 0.5, tolerance: 0.05 },
+							BC_AB: { min: 0.382, max: 0.886, tolerance: 0.05 },
+							CD_BC: { min: 1.618, max: 2.618, tolerance: 0.1 },
+							AD_XA: { min: 0.886, max: 0.886, tolerance: 0.05 }
+						}
+					},
+					crab: {
+						name: 'Crab',
+						color: '#F44336',
+						ratios: {
+							AB_XA: { min: 0.382, max: 0.618, tolerance: 0.05 },
+							BC_AB: { min: 0.382, max: 0.886, tolerance: 0.05 },
+							CD_BC: { min: 2.24, max: 3.618, tolerance: 0.2 },
+							AD_XA: { min: 1.618, max: 1.618, tolerance: 0.1 }
 						}
 					}
-					
-					console.log(`Found ${swings.length} swing points from ${bars} candlesticks`);
-					return swings.sort((a, b) => a.time - b.time);
-				}
+				};
+			}
 
-				// Calculate Fibonacci ratio between three points
-				calculateFibRatio(priceA, priceB, priceC) {
-					const moveAB = Math.abs(priceB - priceA);
-					const moveBC = Math.abs(priceC - priceB);
-					return moveAB === 0 ? 0 : moveBC / moveAB;
-				}
+			// Find swing highs and lows from candlestick data
+			findSwingPoints(candlesticks) {
+				const swings = [];
+				const bars = candlesticks.length;
 
-				// Validate if points form a valid harmonic pattern
-				validatePattern(X, A, B, C, D, patternType) {
-					const pattern = this.patternDefinitions[patternType];
-					if (!pattern) return { isValid: false, confidence: 0 };
+				if (bars < this.minSwingSize * 2 + 1) return swings;
 
-					// Calculate actual ratios from candlestick data
-					const AB_XA = this.calculateFibRatio(X.price, A.price, B.price);
-					const BC_AB = this.calculateFibRatio(A.price, B.price, C.price);
-					const CD_BC = this.calculateFibRatio(B.price, C.price, D.price);
-					const AD_XA = this.calculateFibRatio(X.price, A.price, D.price);
+				for (let i = this.minSwingSize; i < bars - this.minSwingSize; i++) {
+					const current = candlesticks[i];
+					let isSwingHigh = true;
+					let isSwingLow = true;
 
-					const ratios = { AB_XA, BC_AB, CD_BC, AD_XA };
-					let score = 0;
-					let totalChecks = 0;
-
-					// Check each ratio against pattern definition
-					for (const [ratioName, ratio] of Object.entries(ratios)) {
-						const def = pattern.ratios[ratioName];
-						if (def) {
-							totalChecks++;
-							const target = def.min;
-							const tolerance = def.tolerance;
-							const diff = Math.abs(ratio - target) / target;
-							
-							if (diff <= tolerance) {
-								score += 1;
-							} else if (diff <= tolerance * 2) {
-								score += 0.5;
-							}
+					// Check surrounding candlesticks
+					for (let j = i - this.minSwingSize; j <= i + this.minSwingSize; j++) {
+						if (j !== i) {
+							const bar = candlesticks[j];
+							if (bar.high >= current.high) isSwingHigh = false;
+							if (bar.low <= current.low) isSwingLow = false;
 						}
 					}
 
-					const confidence = (score / totalChecks) * 100;
-					const isValid = confidence >= 60; // 60% minimum match
-
-					return {
-						isValid,
-						confidence,
-						ratios,
-						score,
-						totalChecks
-					};
+					if (isSwingHigh && !isSwingLow) {
+						swings.push({
+							index: i,
+							time: current.time,
+							price: current.high,
+							type: 'high',
+							candlestick: current
+						});
+					} else if (isSwingLow && !isSwingHigh) {
+						swings.push({
+							index: i,
+							time: current.time,
+							price: current.low,
+							type: 'low',
+							candlestick: current
+						});
+					}
 				}
 
-				// Check if swing sequence is valid (alternating highs/lows)
-				isValidSwingSequence(X, A, B, C, D) {
-					// Must be chronological
-					if (X.time >= A.time || A.time >= B.time || B.time >= C.time || C.time >= D.time) {
-						return false;
-					}
+				console.log(`Found ${swings.length} swing points from ${bars} candlesticks`);
+				return swings.sort((a, b) => a.time - b.time);
+			}
 
-					// Must alternate between highs and lows
-					const types = [X.type, A.type, B.type, C.type, D.type];
-					
-					// Bullish pattern: High-Low-High-Low-High or Low-High-Low-High-Low
-					const bullishPattern1 = ['high', 'low', 'high', 'low', 'high'];
-					const bullishPattern2 = ['low', 'high', 'low', 'high', 'low'];
-					
-					return JSON.stringify(types) === JSON.stringify(bullishPattern1) || 
-						   JSON.stringify(types) === JSON.stringify(bullishPattern2);
-				}
+			// Calculate Fibonacci ratio between three points
+			calculateFibRatio(priceA, priceB, priceC) {
+				const moveAB = Math.abs(priceB - priceA);
+				const moveBC = Math.abs(priceC - priceB);
+				return moveAB === 0 ? 0 : moveBC / moveAB;
+			}
 
-				// Detect patterns from swing points
-				detectPatterns(swingPoints, patternType) {
-					const patterns = [];
-					
-					if (swingPoints.length < 5) {
-						console.log('Not enough swing points for pattern detection');
-						return patterns;
-					}
+			// Validate if points form a valid harmonic pattern
+			validatePattern(X, A, B, C, D, patternType) {
+				const pattern = this.patternDefinitions[patternType];
+				if (!pattern) return { isValid: false, confidence: 0 };
 
-					console.log(`Analyzing ${swingPoints.length} swings for ${patternType} patterns`);
+				// Calculate actual ratios from candlestick data
+				const AB_XA = this.calculateFibRatio(X.price, A.price, B.price);
+				const BC_AB = this.calculateFibRatio(A.price, B.price, C.price);
+				const CD_BC = this.calculateFibRatio(B.price, C.price, D.price);
+				const AD_XA = this.calculateFibRatio(X.price, A.price, D.price);
 
-					// Test all possible 5-point combinations
-					for (let i = 0; i <= swingPoints.length - 5; i++) {
-						const X = swingPoints[i];
-						const A = swingPoints[i + 1];
-						const B = swingPoints[i + 2];
-						const C = swingPoints[i + 3];
-						const D = swingPoints[i + 4];
+				const ratios = { AB_XA, BC_AB, CD_BC, AD_XA };
+				let score = 0;
+				let totalChecks = 0;
 
-						// Validate swing sequence
-						if (!this.isValidSwingSequence(X, A, B, C, D)) continue;
+				// Check each ratio against pattern definition
+				for (const [ratioName, ratio] of Object.entries(ratios)) {
+					const def = pattern.ratios[ratioName];
+					if (def) {
+						totalChecks++;
+						const target = def.min;
+						const tolerance = def.tolerance;
+						const diff = Math.abs(ratio - target) / target;
 
-						// Validate pattern ratios
-						const validation = this.validatePattern(X, A, B, C, D, patternType);
-						
-						if (validation.isValid) {
-							const pattern = this.patternDefinitions[patternType];
-							patterns.push({
-								type: patternType,
-								name: pattern.name,
-								points: [X, A, B, C, D],
-								color: pattern.color,
-								confidence: validation.confidence,
-								ratios: validation.ratios,
-								direction: X.type === 'high' ? 'bearish' : 'bullish',
-								timestamp: Date.now()
-							});
-							
-							console.log(`Found ${patternType} pattern with ${validation.confidence.toFixed(1)}% confidence`);
+						if (diff <= tolerance) {
+							score += 1;
+						} else if (diff <= tolerance * 2) {
+							score += 0.5;
 						}
 					}
-
-					return patterns.sort((a, b) => b.confidence - a.confidence);
 				}
+
+				const confidence = (score / totalChecks) * 100;
+				const isValid = confidence >= 60; // 60% minimum match
+
+				return {
+					isValid,
+					confidence,
+					ratios,
+					score,
+					totalChecks
+				};
 			}
 
-			// Update status display
-			function updateStatus(message) {
-				const statusEl = document.querySelector('.status');
-				if (statusEl) {
-					statusEl.innerHTML = `<strong>Status:</strong> ${message}`;
+			// Check if swing sequence is valid (alternating highs/lows)
+			isValidSwingSequence(X, A, B, C, D) {
+				// Must be chronological
+				if (X.time >= A.time || A.time >= B.time || B.time >= C.time || C.time >= D.time) {
+					return false;
 				}
-				console.log('Status:', message);
+
+				// Must alternate between highs and lows
+				const types = [X.type, A.type, B.type, C.type, D.type];
+
+				// Bullish pattern: High-Low-High-Low-High or Low-High-Low-High-Low
+				const bullishPattern1 = ['high', 'low', 'high', 'low', 'high'];
+				const bullishPattern2 = ['low', 'high', 'low', 'high', 'low'];
+
+				return JSON.stringify(types) === JSON.stringify(bullishPattern1) ||
+					JSON.stringify(types) === JSON.stringify(bullishPattern2);
 			}
 
-			// Update data info display
-			function updateDataInfo(candlestickCount, swingCount) {
-				const dataEl = document.querySelector('.data-info');
-				if (dataEl) {
-					dataEl.innerHTML = `
+			// Detect patterns from swing points
+			detectPatterns(swingPoints, patternType) {
+				const patterns = [];
+
+				if (swingPoints.length < 5) {
+					console.log('Not enough swing points for pattern detection');
+					return patterns;
+				}
+
+				console.log(`Analyzing ${swingPoints.length} swings for ${patternType} patterns`);
+
+				// Test all possible 5-point combinations
+				for (let i = 0; i <= swingPoints.length - 5; i++) {
+					const X = swingPoints[i];
+					const A = swingPoints[i + 1];
+					const B = swingPoints[i + 2];
+					const C = swingPoints[i + 3];
+					const D = swingPoints[i + 4];
+
+					// Validate swing sequence
+					if (!this.isValidSwingSequence(X, A, B, C, D)) continue;
+
+					// Validate pattern ratios
+					const validation = this.validatePattern(X, A, B, C, D, patternType);
+
+					if (validation.isValid) {
+						const pattern = this.patternDefinitions[patternType];
+						patterns.push({
+							type: patternType,
+							name: pattern.name,
+							points: [X, A, B, C, D],
+							color: pattern.color,
+							confidence: validation.confidence,
+							ratios: validation.ratios,
+							direction: X.type === 'high' ? 'bearish' : 'bullish',
+							timestamp: Date.now()
+						});
+
+						console.log(`Found ${patternType} pattern with ${validation.confidence.toFixed(1)}% confidence`);
+					}
+				}
+
+				return patterns.sort((a, b) => b.confidence - a.confidence);
+			}
+		}
+
+		// Update status display
+		function updateStatus(message) {
+			const statusEl = document.querySelector('.status');
+			if (statusEl) {
+				statusEl.innerHTML = `<strong>Status:</strong> ${message}`;
+			}
+			console.log('Status:', message);
+		}
+
+		// Update data info display
+		function updateDataInfo(candlestickCount, swingCount) {
+			const dataEl = document.querySelector('.data-info');
+			if (dataEl) {
+				dataEl.innerHTML = `
 						📊 <strong>Chart Data:</strong><br>
 						• ${candlestickCount} candlesticks analyzed<br>
 						• ${swingCount} swing points detected<br>
 						• Real-time pattern detection active
 					`;
-				}
 			}
+		}
 
-			// Get actual candlestick data from TradingView
-			function getCandlestickData() {
-				return new Promise((resolve, reject) => {
-					if (!widget || !widget.chart()) {
-						reject('Chart not ready');
-						return;
-					}
-
-					try {
-						const chart = widget.chart();
-						
-						// Try to get chart symbol and timeframe info
-						const symbol = chart.symbol();
-						const interval = chart.resolution();
-						
-						console.log(`Getting candlestick data for ${symbol} on ${interval} timeframe`);
-						
-						// Get visible range
-						const visibleRange = chart.getVisibleRange();
-						console.log('Visible range:', visibleRange);
-						
-						// Create realistic candlestick data based on visible range
-						// In a real implementation, you'd connect to the actual datafeed
-						generateRealisticCandlesticks(visibleRange, symbol, interval)
-							.then(resolve)
-							.catch(reject);
-						
-					} catch (error) {
-						console.error('Error getting candlestick data:', error);
-						reject(error);
-					}
-				});
-			}
-
-			// Generate realistic candlestick data (fallback method)
-			function generateRealisticCandlesticks(range, symbol, interval) {
-				return new Promise((resolve) => {
-					const candlesticks = [];
-					const barCount = 200; // Number of candlesticks to generate
-					const timeSpan = range.to - range.from;
-					const timeStep = timeSpan / barCount;
-					
-					// Starting price based on symbol
-					let basePrice = symbol.includes('AAPL') ? 150 : 
-								   symbol.includes('GOOGL') ? 2800 :
-								   symbol.includes('MSFT') ? 350 : 100;
-					
-					let currentPrice = basePrice;
-					const volatility = 0.015; // 1.5% daily volatility
-					
-					for (let i = 0; i < barCount; i++) {
-						const time = Math.floor(range.from + (i * timeStep));
-						
-						// Generate realistic OHLC with trending behavior
-						const trend = Math.sin(i / 20) * 0.001; // Slight trending
-						const randomMove = (Math.random() - 0.5) * volatility;
-						const priceChange = (trend + randomMove) * currentPrice;
-						
-						const open = currentPrice;
-						const close = currentPrice + priceChange;
-						
-						// Generate high/low with realistic wicks
-						const wickSize = Math.random() * 0.005 * currentPrice;
-						const high = Math.max(open, close) + wickSize;
-						const low = Math.min(open, close) - wickSize;
-						
-						candlesticks.push({
-							time: time,
-							open: parseFloat(open.toFixed(2)),
-							high: parseFloat(high.toFixed(2)),
-							low: parseFloat(low.toFixed(2)),
-							close: parseFloat(close.toFixed(2)),
-							volume: Math.floor(Math.random() * 1000000) + 100000
-						});
-						
-						currentPrice = close;
-					}
-					
-					console.log(`Generated ${candlesticks.length} realistic candlesticks`);
-					resolve(candlesticks);
-				});
-			}
-
-			// Scan for patterns using real candlestick data
-			function scanCandlestickPatterns(patternType) {
-				if (isScanning) {
-					updateStatus('Already scanning, please wait...');
+		// Get actual candlestick data from TradingView
+		function getCandlestickData() {
+			return new Promise((resolve, reject) => {
+				if (!widget || !widget.chart()) {
+					reject('Chart not ready');
 					return;
 				}
-				
-				isScanning = true;
-				updateStatus('Loading candlestick data...');
-				
-				const button = document.querySelector(`[data-pattern="${patternType}"]`);
-				if (button) button.classList.add('scanning');
-				
-				getCandlestickData().then(candlesticks => {
-					if (!candlesticks || candlesticks.length < 20) {
-						updateStatus('Not enough candlestick data available');
-						return;
-					}
-					
-					chartData = candlesticks;
-					updateStatus(`Analyzing ${candlesticks.length} candlesticks...`);
-					
-					// Initialize pattern detector
-					const detector = new CandlestickPatternDetector();
-					
-					// Find swing points from candlesticks
-					const swings = detector.findSwingPoints(candlesticks);
-					updateDataInfo(candlesticks.length, swings.length);
-					
-					if (swings.length < 5) {
-						updateStatus('Not enough swing points found in candlestick data');
-						return;
-					}
-					
-					// Detect patterns
-					const patterns = detector.detectPatterns(swings, patternType);
-					
-					updateStatus(`Found ${patterns.length} ${patternType} patterns in candlestick data`);
-					
-					// Clear previous patterns
-					clearAllPatterns();
-					
-					// Draw patterns on chart
-					patterns.slice(0, 3).forEach(pattern => {
-						drawCandlestickPattern(pattern);
+
+				try {
+					const chart = widget.chart();
+
+					// Try to get chart symbol and timeframe info
+					const symbol = chart.symbol();
+					const interval = chart.resolution();
+
+					console.log(`Getting candlestick data for ${symbol} on ${interval} timeframe`);
+
+					// Get visible range
+					const visibleRange = chart.getVisibleRange();
+					console.log('Visible range:', visibleRange);
+
+					// Create realistic candlestick data based on visible range
+					// In a real implementation, you'd connect to the actual datafeed
+					generateRealisticCandlesticks(visibleRange, symbol, interval)
+						.then(resolve)
+						.catch(reject);
+
+				} catch (error) {
+					console.error('Error getting candlestick data:', error);
+					reject(error);
+				}
+			});
+		}
+
+		// Generate realistic candlestick data (fallback method)
+		function generateRealisticCandlesticks(range, symbol, interval) {
+			return new Promise((resolve) => {
+				const candlesticks = [];
+				const barCount = 200; // Number of candlesticks to generate
+				const timeSpan = range.to - range.from;
+				const timeStep = timeSpan / barCount;
+
+				// Starting price based on symbol
+				let basePrice = symbol.includes('AAPL') ? 150 :
+					symbol.includes('GOOGL') ? 2800 :
+						symbol.includes('MSFT') ? 350 : 100;
+
+				let currentPrice = basePrice;
+				const volatility = 0.015; // 1.5% daily volatility
+
+				for (let i = 0; i < barCount; i++) {
+					const time = Math.floor(range.from + (i * timeStep));
+
+					// Generate realistic OHLC with trending behavior
+					const trend = Math.sin(i / 20) * 0.001; // Slight trending
+					const randomMove = (Math.random() - 0.5) * volatility;
+					const priceChange = (trend + randomMove) * currentPrice;
+
+					const open = currentPrice;
+					const close = currentPrice + priceChange;
+
+					// Generate high/low with realistic wicks
+					const wickSize = Math.random() * 0.005 * currentPrice;
+					const high = Math.max(open, close) + wickSize;
+					const low = Math.min(open, close) - wickSize;
+
+					candlesticks.push({
+						time: time,
+						open: parseFloat(open.toFixed(2)),
+						high: parseFloat(high.toFixed(2)),
+						low: parseFloat(low.toFixed(2)),
+						close: parseFloat(close.toFixed(2)),
+						volume: Math.floor(Math.random() * 1000000) + 100000
 					});
-					
-					// Update results display
-					displayPatternResults(patterns);
-					currentPatterns = patterns;
-					
-				}).catch(error => {
-					console.error('Error scanning patterns:', error);
-					updateStatus(`Error: ${error}`);
-				}).finally(() => {
-					isScanning = false;
-					if (button) button.classList.remove('scanning');
-				});
+
+					currentPrice = close;
+				}
+
+				console.log(`Generated ${candlesticks.length} realistic candlesticks`);
+				resolve(candlesticks);
+			});
+		}
+
+		// Scan for patterns using real candlestick data
+		function scanCandlestickPatterns(patternType) {
+			if (isScanning) {
+				updateStatus('Already scanning, please wait...');
+				return;
 			}
 
-			// Draw pattern based on candlestick coordinates
-			function drawCandlestickPattern(pattern) {
-				if (!widget || !widget.chart()) return;
+			isScanning = true;
+			updateStatus('Loading candlestick data...');
 
-				const chart = widget.chart();
-				const points = pattern.points;
-				
-				console.log(`Drawing ${pattern.name} pattern from candlestick data:`, points);
-				
-				try {
-					// Draw main XABCD lines
-					for (let i = 0; i < points.length - 1; i++) {
-						const startPoint = { time: points[i].time, price: points[i].price };
-						const endPoint = { time: points[i + 1].time, price: points[i + 1].price };
-						
-						chart.createMultipointShape([startPoint, endPoint], {
-							shape: "trend_line",
-							overrides: {
-								linecolor: pattern.color,
-								linewidth: 2,
-								linestyle: 0,
-								transparency: 0,
-								extendRight: false,
-								extendLeft: false
-							},
-							zOrder: "top",
-							lock: false
-						}).then(shapeId => {
-							if (shapeId) {
-								shapeIds.push(shapeId);
-								console.log(`Pattern line ${i + 1} drawn successfully`);
-							}
-						}).catch(error => {
-							console.error(`Error drawing line ${i + 1}:`, error);
-						});
-					}
+			const button = document.querySelector(`[data-pattern="${patternType}"]`);
+			if (button) button.classList.add('scanning');
 
-					// Add point labels (X, A, B, C, D)
-					const labels = ['X', 'A', 'B', 'C', 'D'];
-					points.forEach((point, index) => {
-						chart.createMultipointShape([{ time: point.time, price: point.price }], {
-							shape: "text",
-							text: labels[index],
-							overrides: {
-								color: "#FFFFFF",
-								fontsize: 12,
-								bold: true,
-								backgroundColor: pattern.color,
-								backgroundTransparency: 0
-							},
-							zOrder: "top"
-						}).then(textId => {
-							if (textId) shapeIds.push(textId);
-						});
-					});
+			getCandlestickData().then(candlesticks => {
+				if (!candlesticks || candlesticks.length < 20) {
+					updateStatus('Not enough candlestick data available');
+					return;
+				}
 
-					// Add pattern name label
-					const direction = pattern.direction === 'bullish' ? '🟢' : '🔴';
-					const labelText = `${pattern.name} ${direction} (${pattern.confidence.toFixed(0)}%)`;
-					
-					chart.createMultipointShape([{ 
-						time: points[4].time, 
-						price: points[4].price + (points[1].price - points[0].price) * 0.1 
-					}], {
-						shape: "text",
-						text: labelText,
+				chartData = candlesticks;
+				updateStatus(`Analyzing ${candlesticks.length} candlesticks...`);
+
+				// Initialize pattern detector
+				const detector = new CandlestickPatternDetector();
+
+				// Find swing points from candlesticks
+				const swings = detector.findSwingPoints(candlesticks);
+				updateDataInfo(candlesticks.length, swings.length);
+
+				if (swings.length < 5) {
+					updateStatus('Not enough swing points found in candlestick data');
+					return;
+				}
+
+				// Detect patterns
+				const patterns = detector.detectPatterns(swings, patternType);
+
+				updateStatus(`Found ${patterns.length} ${patternType} patterns in candlestick data`);
+
+				// Clear previous patterns
+				clearAllPatterns();
+
+				// Draw patterns on chart
+				patterns.slice(0, 3).forEach(pattern => {
+					drawCandlestickPattern(pattern);
+				});
+
+				// Update results display
+				displayPatternResults(patterns);
+				currentPatterns = patterns;
+
+			}).catch(error => {
+				console.error('Error scanning patterns:', error);
+				updateStatus(`Error: ${error}`);
+			}).finally(() => {
+				isScanning = false;
+				if (button) button.classList.remove('scanning');
+			});
+		}
+
+		// Draw pattern based on candlestick coordinates
+		function drawCandlestickPattern(pattern) {
+			if (!widget || !widget.chart()) return;
+
+			const chart = widget.chart();
+			const points = pattern.points;
+
+			console.log(`Drawing ${pattern.name} pattern from candlestick data:`, points);
+
+			try {
+				// Draw main XABCD lines
+				for (let i = 0; i < points.length - 1; i++) {
+					const startPoint = { time: points[i].time, price: points[i].price };
+					const endPoint = { time: points[i + 1].time, price: points[i + 1].price };
+
+					chart.createMultipointShape([startPoint, endPoint], {
+						shape: "trend_line",
 						overrides: {
-							color: pattern.color,
-							fontsize: 11,
+							linecolor: pattern.color,
+							linewidth: 2,
+							linestyle: 0,
+							transparency: 0,
+							extendRight: false,
+							extendLeft: false
+						},
+						zOrder: "top",
+						lock: false
+					}).then(shapeId => {
+						if (shapeId) {
+							shapeIds.push(shapeId);
+							console.log(`Pattern line ${i + 1} drawn successfully`);
+						}
+					}).catch(error => {
+						console.error(`Error drawing line ${i + 1}:`, error);
+					});
+				}
+
+				// Add point labels (X, A, B, C, D)
+				const labels = ['X', 'A', 'B', 'C', 'D'];
+				points.forEach((point, index) => {
+					chart.createMultipointShape([{ time: point.time, price: point.price }], {
+						shape: "text",
+						text: labels[index],
+						overrides: {
+							color: "#FFFFFF",
+							fontsize: 12,
 							bold: true,
-							backgroundColor: "#131722",
-							backgroundTransparency: 20
+							backgroundColor: pattern.color,
+							backgroundTransparency: 0
 						},
 						zOrder: "top"
-					}).then(titleId => {
-						if (titleId) shapeIds.push(titleId);
+					}).then(textId => {
+						if (textId) shapeIds.push(textId);
 					});
+				});
 
-				} catch (error) {
-					console.error('Error drawing candlestick pattern:', error);
-				}
+				// Add pattern name label
+				const direction = pattern.direction === 'bullish' ? '🟢' : '🔴';
+				const labelText = `${pattern.name} ${direction} (${pattern.confidence.toFixed(0)}%)`;
+
+				chart.createMultipointShape([{
+					time: points[4].time,
+					price: points[4].price + (points[1].price - points[0].price) * 0.1
+				}], {
+					shape: "text",
+					text: labelText,
+					overrides: {
+						color: pattern.color,
+						fontsize: 11,
+						bold: true,
+						backgroundColor: "#131722",
+						backgroundTransparency: 20
+					},
+					zOrder: "top"
+				}).then(titleId => {
+					if (titleId) shapeIds.push(titleId);
+				});
+
+			} catch (error) {
+				console.error('Error drawing candlestick pattern:', error);
+			}
+		}
+
+		// Clear all patterns from chart
+		function clearAllPatterns() {
+			if (!widget || !widget.chart()) return;
+
+			try {
+				widget.chart().removeAllShapes();
+				shapeIds = [];
+				currentPatterns = [];
+				updateStatus('All patterns cleared');
+
+				// Reset button states
+				document.querySelectorAll('.pattern-button').forEach(btn => {
+					btn.classList.remove('active', 'scanning');
+				});
+
+				displayPatternResults([]);
+			} catch (error) {
+				console.error('Error clearing patterns:', error);
+			}
+		}
+
+		// Display pattern results
+		function displayPatternResults(patterns) {
+			const resultsEl = document.querySelector('.pattern-results');
+			if (!resultsEl) return;
+
+			if (patterns.length === 0) {
+				resultsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No patterns found in candlestick data</div>';
+				return;
 			}
 
-			// Clear all patterns from chart
-			function clearAllPatterns() {
-				if (!widget || !widget.chart()) return;
-				
-				try {
-					widget.chart().removeAllShapes();
-					shapeIds = [];
-					currentPatterns = [];
-					updateStatus('All patterns cleared');
-					
-					// Reset button states
-					document.querySelectorAll('.pattern-button').forEach(btn => {
-						btn.classList.remove('active', 'scanning');
-					});
-					
-					displayPatternResults([]);
-				} catch (error) {
-					console.error('Error clearing patterns:', error);
-				}
-			}
-
-			// Display pattern results
-			function displayPatternResults(patterns) {
-				const resultsEl = document.querySelector('.pattern-results');
-				if (!resultsEl) return;
-				
-				if (patterns.length === 0) {
-					resultsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No patterns found in candlestick data</div>';
-					return;
-				}
-				
-				let html = '<h4>📊 Candlestick Pattern Results:</h4>';
-				patterns.forEach((pattern, index) => {
-					const direction = pattern.direction === 'bullish' ? '🟢 Bullish' : '🔴 Bearish';
-					html += `
+			let html = '<h4>📊 Candlestick Pattern Results:</h4>';
+			patterns.forEach((pattern, index) => {
+				const direction = pattern.direction === 'bullish' ? '🟢 Bullish' : '🔴 Bearish';
+				html += `
 						<div class="pattern-item">
 							<div class="pattern-name">${pattern.name} ${direction}</div>
 							<div class="pattern-details">
@@ -615,114 +623,115 @@
 							</div>
 						</div>
 					`;
-				});
-				
-				resultsEl.innerHTML = html;
+			});
+
+			resultsEl.innerHTML = html;
+		}
+
+		function getParameterByName(name) {
+			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(location.search);
+			return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}
+
+		function initOnReady() {
+			var datafeedUrl = "https://demo-feed-data.tradingview.com";
+			var customDataUrl = getParameterByName('dataUrl');
+			if (customDataUrl !== "") {
+				datafeedUrl = customDataUrl.startsWith('https://') ? customDataUrl : `https://${customDataUrl}`;
 			}
 
-			function getParameterByName(name) {
-				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-					results = regex.exec(location.search);
-				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-			}
-
-			function initOnReady() {
-				var datafeedUrl = "https://demo-feed-data.tradingview.com";
-				var customDataUrl = getParameterByName('dataUrl');
-				if (customDataUrl !== "") {
-					datafeedUrl = customDataUrl.startsWith('https://') ? customDataUrl : `https://${customDataUrl}`;
+			widget = window.tvWidget = new TradingView.widget({
+				debug: false,
+				fullscreen: true,
+				symbol: 'AAPL',
+				interval: '1D',
+				container: "tv_chart_container",
+				datafeed: new Datafeeds.UDFCompatibleDatafeed(datafeedUrl, undefined, {
+					maxResponseLength: 1000,
+					expectedOrder: 'latestFirst',
+				}),
+				library_path: "charting_library/",
+				locale: getParameterByName('lang') || "en",
+				disabled_features: ["use_localstorage_for_settings"],
+				enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
+				charts_storage_url: 'https://saveload.tradingview.com',
+				charts_storage_api_version: "1.1",
+				client_id: 'tradingview.com',
+				user_id: 'public_user_id',
+				theme: getParameterByName('theme') || 'dark',
+				overrides: {
+					"paneProperties.background": "#131722",
+					"mainSeriesProperties.candleStyle.upColor": "#4CAF50",
+					"mainSeriesProperties.candleStyle.downColor": "#F44336",
+					"mainSeriesProperties.candleStyle.wickUpColor": "#4CAF50",
+					"mainSeriesProperties.candleStyle.wickDownColor": "#F44336"
 				}
+			});
 
-				widget = window.tvWidget = new TradingView.widget({
-					debug: false,
-					fullscreen: true,
-					symbol: 'AAPL',
-					interval: '1D',
-					container: "tv_chart_container",
-					datafeed: new Datafeeds.UDFCompatibleDatafeed(datafeedUrl, undefined, {
-						maxResponseLength: 1000,
-						expectedOrder: 'latestFirst',
-					}),
-					library_path: "charting_library/",
-					locale: getParameterByName('lang') || "en",
-					disabled_features: ["use_localstorage_for_settings"],
-					enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
-					charts_storage_url: 'https://saveload.tradingview.com',
-					charts_storage_api_version: "1.1",
-					client_id: 'tradingview.com',
-					user_id: 'public_user_id',
-					theme: getParameterByName('theme') || 'dark',
-					overrides: {
-						"paneProperties.background": "#131722",
-						"mainSeriesProperties.candleStyle.upColor": "#4CAF50",
-						"mainSeriesProperties.candleStyle.downColor": "#F44336",
-						"mainSeriesProperties.candleStyle.wickUpColor": "#4CAF50",
-						"mainSeriesProperties.candleStyle.wickDownColor": "#F44336"
-					}
-				});
+			widget.onChartReady(() => {
+				console.log('Chart ready - Candlestick pattern scanner initialized');
+				updateStatus('Chart loaded - Ready to scan candlestick patterns');
 
-				widget.onChartReady(() => {
-					console.log('Chart ready - Candlestick pattern scanner initialized');
-					updateStatus('Chart loaded - Ready to scan candlestick patterns');
-					
-					setTimeout(() => {
-						updateStatus('Ready - Click a pattern button to analyze candlesticks');
-					}, 2000);
-				});
-			}
+				setTimeout(() => {
+					updateStatus('Ready - Click a pattern button to analyze candlesticks');
+				}, 2000);
+			});
+		}
 
-			window.addEventListener('DOMContentLoaded', initOnReady, false);
-		</script>
-	</head>
+		window.addEventListener('DOMContentLoaded', initOnReady, false);
+	</script>
+</head>
 
-	<body>
-		<div id="tv_chart_container"></div>
-		
-		<div class="controls">
-			<h3>📊 Candlestick Pattern Scanner</h3>
-			
-			<div class="status">
-				<strong>Status:</strong> Initializing...
-			</div>
-			
-			<div class="data-info">
-				📊 <strong>Waiting for chart data...</strong>
-			</div>
-			
-			<button class="pattern-button" data-pattern="gartley" onclick="scanCandlestickPatterns('gartley')">
-				🦋 Scan Gartley (from Candlesticks)
-			</button>
-			
-			<button class="pattern-button" data-pattern="butterfly" onclick="scanCandlestickPatterns('butterfly')">
-				🦋 Scan Butterfly (from Candlesticks)
-			</button>
-			
-			<button class="pattern-button" data-pattern="bat" onclick="scanCandlestickPatterns('bat')">
-				🦇 Scan Bat (from Candlesticks)
-			</button>
-			
-			<button class="pattern-button" data-pattern="crab" onclick="scanCandlestickPatterns('crab')">
-				🦀 Scan Crab (from Candlesticks)
-			</button>
-			
-			<button class="pattern-button clear-button" onclick="clearAllPatterns()">
-				🗑️ Clear All Patterns
-			</button>
-			
-			<div class="pattern-results">
-				<div style="text-align: center; color: #666; padding: 20px;">
-					Click a pattern button to analyze candlesticks
-				</div>
-			</div>
-			
-			<div style="margin-top: 15px; font-size: 11px; color: #666; line-height: 1.4;">
-				<strong>🕯️ Candlestick Analysis:</strong><br>
-				• Patterns detected from actual OHLC data<br>
-				• Swing points identified from candlestick highs/lows<br>
-				• Fibonacci ratios calculated from real price movements<br>
-				• Pattern validation based on harmonic trading rules
+<body>
+	<div id="tv_chart_container"></div>
+
+	<div class="controls">
+		<h3>📊 Candlestick Pattern Scanner</h3>
+
+		<div class="status">
+			<strong>Status:</strong> Initializing...
+		</div>
+
+		<div class="data-info">
+			📊 <strong>Waiting for chart data...</strong>
+		</div>
+
+		<button class="pattern-button" data-pattern="gartley" onclick="scanCandlestickPatterns('gartley')">
+			🦋 Scan Gartley (from Candlesticks)
+		</button>
+
+		<button class="pattern-button" data-pattern="butterfly" onclick="scanCandlestickPatterns('butterfly')">
+			🦋 Scan Butterfly (from Candlesticks)
+		</button>
+
+		<button class="pattern-button" data-pattern="bat" onclick="scanCandlestickPatterns('bat')">
+			🦇 Scan Bat (from Candlesticks)
+		</button>
+
+		<button class="pattern-button" data-pattern="crab" onclick="scanCandlestickPatterns('crab')">
+			🦀 Scan Crab (from Candlesticks)
+		</button>
+
+		<button class="pattern-button clear-button" onclick="clearAllPatterns()">
+			🗑️ Clear All Patterns
+		</button>
+
+		<div class="pattern-results">
+			<div style="text-align: center; color: #666; padding: 20px;">
+				Click a pattern button to analyze candlesticks
 			</div>
 		</div>
-	</body>
+
+		<div style="margin-top: 15px; font-size: 11px; color: #666; line-height: 1.4;">
+			<strong>🕯️ Candlestick Analysis:</strong><br>
+			• Patterns detected from actual OHLC data<br>
+			• Swing points identified from candlestick highs/lows<br>
+			• Fibonacci ratios calculated from real price movements<br>
+			• Pattern validation based on harmonic trading rules
+		</div>
+	</div>
+</body>
+
 </html>

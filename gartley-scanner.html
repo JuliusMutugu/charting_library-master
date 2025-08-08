@@ -218,12 +218,12 @@
     </style>
 
     <script type="text/javascript">
-            let widget;
-            let shapeIds = [];
-            let currentSymbol = 'EURUSD';
-            let currentTimeframe = '1H';
-            let isScanning = false;
-            let marketData = [];        // Professional Gartley Pattern Detector
+        let widget;
+        let shapeIds = [];
+        let currentSymbol = 'EURUSD';
+        let currentTimeframe = '1H';
+        let isScanning = false;
+        let marketData = [];        // Professional Gartley Pattern Detector
         class GartleyDetector {
             constructor() {
                 // Gartley pattern specifications (Scott Carney methodology)
@@ -235,112 +235,112 @@
                 };
             }
 
-                // Get real market data from TradingView chart
-                async getRealMarketData(symbol, timeframe, barsCount = 300) {
-                    try {
-                        if (!widget || !widget.chart()) {
-                            throw new Error('Chart not ready');
-                        }
-
-                        // Get the chart's visible bars data
-                        const chart = widget.chart();
-                        
-                        // For demo purposes, create realistic data that matches the visible timeframe
-                        // In production, you would get this from chart.getBars() or similar API
-                        const data = this.generateChartBasedData(symbol, timeframe, barsCount);
-                        updateStatus(`Analyzing ${data.length} bars from chart`, 'success');
-                        return data;
-                    } catch (error) {
-                        updateStatus(`Error getting chart data: ${error.message}`, 'error');
-                        throw error;
+            // Get real market data from TradingView chart
+            async getRealMarketData(symbol, timeframe, barsCount = 300) {
+                try {
+                    if (!widget || !widget.chart()) {
+                        throw new Error('Chart not ready');
                     }
+
+                    // Get the chart's visible bars data
+                    const chart = widget.chart();
+
+                    // For demo purposes, create realistic data that matches the visible timeframe
+                    // In production, you would get this from chart.getBars() or similar API
+                    const data = this.generateChartBasedData(symbol, timeframe, barsCount);
+                    updateStatus(`Analyzing ${data.length} bars from chart`, 'success');
+                    return data;
+                } catch (error) {
+                    updateStatus(`Error getting chart data: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            // Generate data that's consistent with what's visible on the chart
+            generateChartBasedData(symbol, timeframe, barsCount) {
+                const bars = [];
+                const now = Date.now();
+                const timeframeMins = this.getTimeframeMinutes(timeframe);
+
+                // Start with EURUSD realistic price around 1.08-1.09 range
+                let basePrice = 1.0850;
+                const volatility = 0.008; // Realistic forex volatility
+
+                // Create a realistic trend with swing points for Gartley formation
+                for (let i = barsCount; i >= 0; i--) {
+                    const timestamp = Math.floor((now - (i * timeframeMins * 60 * 1000)) / 1000);
+
+                    // Create realistic market movement with identifiable swing points
+                    const trendPhase = Math.floor(i / 50); // Change trend every 50 bars
+                    const trendDirection = (trendPhase % 2 === 0) ? 1 : -1;
+                    const trendStrength = 0.0002 * trendDirection;
+
+                    // Add realistic noise and momentum
+                    const noise = (Math.random() - 0.5) * volatility;
+                    const momentum = Math.sin(i / 20) * 0.0001; // Creates swing patterns
+
+                    const priceChange = basePrice * (trendStrength + noise + momentum);
+
+                    const open = basePrice;
+                    const close = basePrice + priceChange;
+
+                    // Generate realistic wicks for proper swing identification
+                    const wickRange = Math.abs(priceChange) * (0.5 + Math.random() * 1.5);
+                    const upperWick = wickRange * Math.random();
+                    const lowerWick = wickRange * Math.random();
+
+                    const high = Math.max(open, close) + upperWick;
+                    const low = Math.min(open, close) - lowerWick;
+
+                    bars.push({
+                        time: timestamp,
+                        open: this.roundToTick(open, 0.00001),
+                        high: this.roundToTick(high, 0.00001),
+                        low: this.roundToTick(low, 0.00001),
+                        close: this.roundToTick(close, 0.00001),
+                        volume: Math.floor(Math.random() * 500000) + 100000
+                    });
+
+                    basePrice = close;
                 }
 
-                // Generate data that's consistent with what's visible on the chart
-                generateChartBasedData(symbol, timeframe, barsCount) {
-                    const bars = [];
-                    const now = Date.now();
-                    const timeframeMins = this.getTimeframeMinutes(timeframe);
-                    
-                    // Start with EURUSD realistic price around 1.08-1.09 range
-                    let basePrice = 1.0850;
-                    const volatility = 0.008; // Realistic forex volatility
-                    
-                    // Create a realistic trend with swing points for Gartley formation
-                    for (let i = barsCount; i >= 0; i--) {
-                        const timestamp = Math.floor((now - (i * timeframeMins * 60 * 1000)) / 1000);
-                        
-                        // Create realistic market movement with identifiable swing points
-                        const trendPhase = Math.floor(i / 50); // Change trend every 50 bars
-                        const trendDirection = (trendPhase % 2 === 0) ? 1 : -1;
-                        const trendStrength = 0.0002 * trendDirection;
-                        
-                        // Add realistic noise and momentum
-                        const noise = (Math.random() - 0.5) * volatility;
-                        const momentum = Math.sin(i / 20) * 0.0001; // Creates swing patterns
-                        
-                        const priceChange = basePrice * (trendStrength + noise + momentum);
-                        
-                        const open = basePrice;
-                        const close = basePrice + priceChange;
-                        
-                        // Generate realistic wicks for proper swing identification
-                        const wickRange = Math.abs(priceChange) * (0.5 + Math.random() * 1.5);
-                        const upperWick = wickRange * Math.random();
-                        const lowerWick = wickRange * Math.random();
-                        
-                        const high = Math.max(open, close) + upperWick;
-                        const low = Math.min(open, close) - lowerWick;
-                        
-                        bars.push({
-                            time: timestamp,
-                            open: this.roundToTick(open, 0.00001),
-                            high: this.roundToTick(high, 0.00001),
-                            low: this.roundToTick(low, 0.00001),
-                            close: this.roundToTick(close, 0.00001),
-                            volume: Math.floor(Math.random() * 500000) + 100000
-                        });
-                        
-                        basePrice = close;
-                    }
-                    
-                    // Ensure we have some clear swing points for pattern formation
-                    this.enhanceSwingPoints(bars);
-                    
-                    return bars.sort((a, b) => a.time - b.time);
-                }
+                // Ensure we have some clear swing points for pattern formation
+                this.enhanceSwingPoints(bars);
 
-                // Enhance the data to have clearer swing points for better pattern detection
-                enhanceSwingPoints(bars) {
-                    const swingIndices = [50, 100, 150, 200, 250]; // Create clear swings
-                    
-                    swingIndices.forEach((index, i) => {
-                        if (index < bars.length) {
-                            const bar = bars[index];
-                            const isHigh = i % 2 === 0;
-                            
-                            if (isHigh) {
-                                // Make this a clear swing high
-                                bar.high = Math.max(bar.open, bar.close) + 0.002;
-                                // Adjust surrounding bars to be lower
-                                for (let j = Math.max(0, index - 5); j <= Math.min(bars.length - 1, index + 5); j++) {
-                                    if (j !== index && bars[j]) {
-                                        bars[j].high = Math.min(bars[j].high, bar.high - 0.0005);
-                                    }
+                return bars.sort((a, b) => a.time - b.time);
+            }
+
+            // Enhance the data to have clearer swing points for better pattern detection
+            enhanceSwingPoints(bars) {
+                const swingIndices = [50, 100, 150, 200, 250]; // Create clear swings
+
+                swingIndices.forEach((index, i) => {
+                    if (index < bars.length) {
+                        const bar = bars[index];
+                        const isHigh = i % 2 === 0;
+
+                        if (isHigh) {
+                            // Make this a clear swing high
+                            bar.high = Math.max(bar.open, bar.close) + 0.002;
+                            // Adjust surrounding bars to be lower
+                            for (let j = Math.max(0, index - 5); j <= Math.min(bars.length - 1, index + 5); j++) {
+                                if (j !== index && bars[j]) {
+                                    bars[j].high = Math.min(bars[j].high, bar.high - 0.0005);
                                 }
-                            } else {
-                                // Make this a clear swing low
-                                bar.low = Math.min(bar.open, bar.close) - 0.002;
-                                // Adjust surrounding bars to be higher
-                                for (let j = Math.max(0, index - 5); j <= Math.min(bars.length - 1, index + 5); j++) {
-                                    if (j !== index && bars[j]) {
-                                        bars[j].low = Math.max(bars[j].low, bar.low + 0.0005);
-                                    }
+                            }
+                        } else {
+                            // Make this a clear swing low
+                            bar.low = Math.min(bar.open, bar.close) - 0.002;
+                            // Adjust surrounding bars to be higher
+                            for (let j = Math.max(0, index - 5); j <= Math.min(bars.length - 1, index + 5); j++) {
+                                if (j !== index && bars[j]) {
+                                    bars[j].low = Math.max(bars[j].low, bar.low + 0.0005);
                                 }
                             }
                         }
-                    });
-                }            getTimeframeMinutes(tf) {
+                    }
+                });
+            } getTimeframeMinutes(tf) {
                 const timeframes = {
                     '1': 1, '5': 5, '15': 15, '30': 30, '1H': 60,
                     '4H': 240, '1D': 1440, '1W': 10080
@@ -378,100 +378,100 @@
                 return Math.round(price / tickSize) * tickSize;
             }
 
-                // Find swing highs and lows in candlestick data with enhanced detection
-                findSwingPoints(candlesticks, lookback = 8) {
-                    const swings = [];
-                    
-                    for (let i = lookback; i < candlesticks.length - lookback; i++) {
-                        const current = candlesticks[i];
-                        let isSwingHigh = true;
-                        let isSwingLow = true;
-                        
-                        // Check surrounding candlesticks with stricter criteria
-                        for (let j = i - lookback; j <= i + lookback; j++) {
-                            if (j !== i) {
-                                const bar = candlesticks[j];
-                                if (bar.high >= current.high) isSwingHigh = false;
-                                if (bar.low <= current.low) isSwingLow = false;
-                            }
-                        }
-                        
-                        // Add minimum significance filter
-                        const avgPrice = (current.high + current.low) / 2;
-                        const minSwingSize = avgPrice * 0.001; // Minimum 0.1% move
-                        
-                        if (isSwingHigh && !isSwingLow) {
-                            // Check if this high is significant enough
-                            let significantHigh = false;
-                            for (let k = Math.max(0, i - 20); k <= Math.min(candlesticks.length - 1, i + 20); k++) {
-                                if (k !== i && Math.abs(candlesticks[k].high - current.high) > minSwingSize) {
-                                    significantHigh = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (significantHigh) {
-                                swings.push({
-                                    index: i,
-                                    time: current.time,
-                                    price: current.high,
-                                    type: 'high',
-                                    candlestick: current
-                                });
-                            }
-                        } else if (isSwingLow && !isSwingHigh) {
-                            // Check if this low is significant enough
-                            let significantLow = false;
-                            for (let k = Math.max(0, i - 20); k <= Math.min(candlesticks.length - 1, i + 20); k++) {
-                                if (k !== i && Math.abs(candlesticks[k].low - current.low) > minSwingSize) {
-                                    significantLow = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (significantLow) {
-                                swings.push({
-                                    index: i,
-                                    time: current.time,
-                                    price: current.low,
-                                    type: 'low',
-                                    candlestick: current
-                                });
-                            }
-                        }
-                    }
-                    
-                    console.log(`Found ${swings.length} significant swing points from ${candlesticks.length} candlesticks`);
-                    
-                    // Ensure we have enough swings for pattern detection
-                    if (swings.length < 5) {
-                        console.log('Adding artificial swing points for demonstration');
-                        this.addDemoSwingPoints(swings, candlesticks);
-                    }
-                    
-                    return swings;
-                }
+            // Find swing highs and lows in candlestick data with enhanced detection
+            findSwingPoints(candlesticks, lookback = 8) {
+                const swings = [];
 
-                // Add demo swing points to ensure we can show a Gartley pattern
-                addDemoSwingPoints(swings, candlesticks) {
-                    const demoIndices = [50, 80, 120, 160, 200];
-                    const demoTypes = ['high', 'low', 'high', 'low', 'high'];
-                    
-                    demoIndices.forEach((index, i) => {
-                        if (index < candlesticks.length && swings.length <= i) {
-                            const bar = candlesticks[index];
+                for (let i = lookback; i < candlesticks.length - lookback; i++) {
+                    const current = candlesticks[i];
+                    let isSwingHigh = true;
+                    let isSwingLow = true;
+
+                    // Check surrounding candlesticks with stricter criteria
+                    for (let j = i - lookback; j <= i + lookback; j++) {
+                        if (j !== i) {
+                            const bar = candlesticks[j];
+                            if (bar.high >= current.high) isSwingHigh = false;
+                            if (bar.low <= current.low) isSwingLow = false;
+                        }
+                    }
+
+                    // Add minimum significance filter
+                    const avgPrice = (current.high + current.low) / 2;
+                    const minSwingSize = avgPrice * 0.001; // Minimum 0.1% move
+
+                    if (isSwingHigh && !isSwingLow) {
+                        // Check if this high is significant enough
+                        let significantHigh = false;
+                        for (let k = Math.max(0, i - 20); k <= Math.min(candlesticks.length - 1, i + 20); k++) {
+                            if (k !== i && Math.abs(candlesticks[k].high - current.high) > minSwingSize) {
+                                significantHigh = true;
+                                break;
+                            }
+                        }
+
+                        if (significantHigh) {
                             swings.push({
-                                index: index,
-                                time: bar.time,
-                                price: demoTypes[i] === 'high' ? bar.high : bar.low,
-                                type: demoTypes[i],
-                                candlestick: bar
+                                index: i,
+                                time: current.time,
+                                price: current.high,
+                                type: 'high',
+                                candlestick: current
                             });
                         }
-                    });
-                    
-                    console.log(`Added demo swing points, total: ${swings.length}`);
-                }            // Calculate Fibonacci ratio between three price points
+                    } else if (isSwingLow && !isSwingHigh) {
+                        // Check if this low is significant enough
+                        let significantLow = false;
+                        for (let k = Math.max(0, i - 20); k <= Math.min(candlesticks.length - 1, i + 20); k++) {
+                            if (k !== i && Math.abs(candlesticks[k].low - current.low) > minSwingSize) {
+                                significantLow = true;
+                                break;
+                            }
+                        }
+
+                        if (significantLow) {
+                            swings.push({
+                                index: i,
+                                time: current.time,
+                                price: current.low,
+                                type: 'low',
+                                candlestick: current
+                            });
+                        }
+                    }
+                }
+
+                console.log(`Found ${swings.length} significant swing points from ${candlesticks.length} candlesticks`);
+
+                // Ensure we have enough swings for pattern detection
+                if (swings.length < 5) {
+                    console.log('Adding artificial swing points for demonstration');
+                    this.addDemoSwingPoints(swings, candlesticks);
+                }
+
+                return swings;
+            }
+
+            // Add demo swing points to ensure we can show a Gartley pattern
+            addDemoSwingPoints(swings, candlesticks) {
+                const demoIndices = [50, 80, 120, 160, 200];
+                const demoTypes = ['high', 'low', 'high', 'low', 'high'];
+
+                demoIndices.forEach((index, i) => {
+                    if (index < candlesticks.length && swings.length <= i) {
+                        const bar = candlesticks[index];
+                        swings.push({
+                            index: index,
+                            time: bar.time,
+                            price: demoTypes[i] === 'high' ? bar.high : bar.low,
+                            type: demoTypes[i],
+                            candlestick: bar
+                        });
+                    }
+                });
+
+                console.log(`Added demo swing points, total: ${swings.length}`);
+            }            // Calculate Fibonacci ratio between three price points
             calculateFibRatio(priceA, priceB, priceC) {
                 const moveAB = Math.abs(priceB - priceA);
                 const moveBC = Math.abs(priceC - priceB);
@@ -615,33 +615,33 @@
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
 
-            function changeSymbol() {
-                const symbolInput = document.querySelector('.tv-symbol-search');
-                const newSymbol = symbolInput.value.toUpperCase().trim();
-                
-                if (newSymbol && newSymbol !== currentSymbol) {
-                    currentSymbol = newSymbol;
-                    updateStatus(`Symbol set to ${newSymbol}`, 'success');
-                    clearAllPatterns();
-                    
-                    // Don't change TradingView chart symbol to avoid invalid symbol errors
-                    // The scanner will work with the current symbol for pattern detection
-                }
-            }
+        function changeSymbol() {
+            const symbolInput = document.querySelector('.tv-symbol-search');
+            const newSymbol = symbolInput.value.toUpperCase().trim();
 
-            function changeTimeframe() {
-                const timeframeSelect = document.querySelector('.tv-timeframe-selector');
-                const newTimeframe = timeframeSelect.value;
+            if (newSymbol && newSymbol !== currentSymbol) {
+                currentSymbol = newSymbol;
+                updateStatus(`Symbol set to ${newSymbol}`, 'success');
+                clearAllPatterns();
 
-                if (newTimeframe !== currentTimeframe) {
-                    currentTimeframe = newTimeframe;
-                    updateStatus(`Timeframe set to ${newTimeframe}`, 'success');
-                    clearAllPatterns();
-                    
-                    // Don't change TradingView chart timeframe to avoid issues
-                    // The scanner will use the selected timeframe for pattern detection
-                }
+                // Don't change TradingView chart symbol to avoid invalid symbol errors
+                // The scanner will work with the current symbol for pattern detection
             }
+        }
+
+        function changeTimeframe() {
+            const timeframeSelect = document.querySelector('.tv-timeframe-selector');
+            const newTimeframe = timeframeSelect.value;
+
+            if (newTimeframe !== currentTimeframe) {
+                currentTimeframe = newTimeframe;
+                updateStatus(`Timeframe set to ${newTimeframe}`, 'success');
+                clearAllPatterns();
+
+                // Don't change TradingView chart timeframe to avoid issues
+                // The scanner will use the selected timeframe for pattern detection
+            }
+        }
 
         async function scanGartleyPatterns() {
             if (isScanning) {
@@ -815,42 +815,42 @@
             return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
         }
 
-            function initOnReady() {
-                widget = window.tvWidget = new TradingView.widget({
-                    debug: false,
-                    fullscreen: true,
-                    symbol: 'EURUSD', // Use FOREX which supports intraday intervals
-                    interval: '1H',
-                    container: "tv_chart_container",
-                    datafeed: new Datafeeds.UDFCompatibleDatafeed("https://demo-feed-data.tradingview.com"),
-                    library_path: "charting_library/",
-                    locale: "en",
-                    disabled_features: ["use_localstorage_for_settings", "header_symbol_search"],
-                    enabled_features: ["study_templates"],
-                    theme: 'dark',
-                    custom_css_url: 'themed.css',
-                    overrides: {
-                        "paneProperties.background": "#131722",
-                        "paneProperties.vertGridProperties.color": "#1e222d",
-                        "paneProperties.horzGridProperties.color": "#1e222d",
-                        "mainSeriesProperties.candleStyle.upColor": "#4caf50",
-                        "mainSeriesProperties.candleStyle.downColor": "#f44336",
-                        "mainSeriesProperties.candleStyle.wickUpColor": "#4caf50",
-                        "mainSeriesProperties.candleStyle.wickDownColor": "#f44336",
-                        "mainSeriesProperties.candleStyle.borderUpColor": "#4caf50",
-                        "mainSeriesProperties.candleStyle.borderDownColor": "#f44336"
-                    }
-                });
+        function initOnReady() {
+            widget = window.tvWidget = new TradingView.widget({
+                debug: false,
+                fullscreen: true,
+                symbol: 'EURUSD', // Use FOREX which supports intraday intervals
+                interval: '1H',
+                container: "tv_chart_container",
+                datafeed: new Datafeeds.UDFCompatibleDatafeed("https://demo-feed-data.tradingview.com"),
+                library_path: "charting_library/",
+                locale: "en",
+                disabled_features: ["use_localstorage_for_settings", "header_symbol_search"],
+                enabled_features: ["study_templates"],
+                theme: 'dark',
+                custom_css_url: 'themed.css',
+                overrides: {
+                    "paneProperties.background": "#131722",
+                    "paneProperties.vertGridProperties.color": "#1e222d",
+                    "paneProperties.horzGridProperties.color": "#1e222d",
+                    "mainSeriesProperties.candleStyle.upColor": "#4caf50",
+                    "mainSeriesProperties.candleStyle.downColor": "#f44336",
+                    "mainSeriesProperties.candleStyle.wickUpColor": "#4caf50",
+                    "mainSeriesProperties.candleStyle.wickDownColor": "#f44336",
+                    "mainSeriesProperties.candleStyle.borderUpColor": "#4caf50",
+                    "mainSeriesProperties.candleStyle.borderDownColor": "#f44336"
+                }
+            });
 
-                widget.onChartReady(() => {
-                    console.log('TradingView Gartley Scanner Ready');
-                    updateStatus('Ready - Click Scan to find Gartley patterns on the visible chart', 'success');
-                    
-                    // Set chart symbol in search box
-                    document.querySelector('.tv-symbol-search').value = 'EURUSD';
-                    currentSymbol = 'EURUSD';
-                });
-            }        window.addEventListener('DOMContentLoaded', initOnReady, false);
+            widget.onChartReady(() => {
+                console.log('TradingView Gartley Scanner Ready');
+                updateStatus('Ready - Click Scan to find Gartley patterns on the visible chart', 'success');
+
+                // Set chart symbol in search box
+                document.querySelector('.tv-symbol-search').value = 'EURUSD';
+                currentSymbol = 'EURUSD';
+            });
+        } window.addEventListener('DOMContentLoaded', initOnReady, false);
     </script>
 </head>
 

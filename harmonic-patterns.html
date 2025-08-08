@@ -1,582 +1,645 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-		<title>TradingView Advanced Charts - Harmonic Patterns</title>
-		
-		<!-- Fix for iOS Safari zooming bug -->
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
-		
-		<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
-		<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
-		
-		<style>
-			body {
-				margin: 0px;
-				font-family: Arial, sans-serif;
-			}
-			.controls {
-				position: fixed;
-				top: 10px;
-				right: 10px;
-				background: rgba(255, 255, 255, 0.9);
-				padding: 15px;
-				border-radius: 8px;
-				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-				z-index: 1000;
-				max-width: 300px;
-			}
-			.controls h3 {
-				margin: 0 0 10px 0;
-				color: #333;
-			}
-			.pattern-button {
-				display: block;
-				width: 100%;
-				margin: 5px 0;
-				padding: 8px 12px;
-				background: #2196F3;
-				color: white;
-				border: none;
-				border-radius: 4px;
-				cursor: pointer;
-				font-size: 12px;
-			}
-			.pattern-button:hover {
-				background: #1976D2;
-			}
-			.pattern-button.active {
-				background: #4CAF50;
-			}
-			.clear-button {
-				background: #f44336;
-			}
-			.clear-button:hover {
-				background: #d32f2f;
-			}
-			.info {
-				font-size: 11px;
-				color: #666;
-				margin-top: 10px;
-			}
-		</style>
 
-		<script type="text/javascript">
-			// Fibonacci ratios for harmonic patterns
-			const FIBONACCI_RATIOS = {
-				0.236: 0.236,
-				0.382: 0.382,
-				0.500: 0.500,
-				0.618: 0.618,
-				0.786: 0.786,
-				0.886: 0.886,
-				1.000: 1.000,
-				1.130: 1.130,
-				1.272: 1.272,
-				1.414: 1.414,
-				1.618: 1.618,
-				2.000: 2.000,
-				2.236: 2.236,
-				2.618: 2.618
-			};
+<head>
+	<title>TradingView Advanced Charts - Harmonic Patterns</title>
 
-			// Harmonic pattern definitions
-			const HARMONIC_PATTERNS = {
-				gartley: {
-					name: "Gartley",
-					ratios: {
-						AB_XA: [0.618],
-						BC_AB: [0.382, 0.886],
-						CD_BC: [1.272, 1.618],
-						AD_XA: [0.786]
-					},
-					color: "#FF6B6B"
+	<!-- Fix for iOS Safari zooming bug -->
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+
+	<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
+	<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
+
+	<style>
+		body {
+			margin: 0px;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+			background: #131722;
+		}
+
+		#tv_chart_container {
+			width: 100%;
+			height: 100vh;
+			margin: 0;
+			padding: 0;
+		}
+
+		.controls {
+			position: fixed;
+			top: 10px;
+			right: 10px;
+			background: rgba(255, 255, 255, 0.95);
+			padding: 20px;
+			border-radius: 8px;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+			z-index: 10000;
+			width: 280px;
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
+			display: block !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+		}
+
+		.controls h3 {
+			margin: 0 0 15px 0;
+			color: #2c3e50;
+			font-size: 16px;
+			font-weight: 600;
+			text-align: center;
+			border-bottom: 2px solid #ecf0f1;
+			padding-bottom: 10px;
+		}
+
+		.pattern-button {
+			display: block;
+			width: 100%;
+			margin: 8px 0;
+			padding: 12px 16px;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 13px;
+			font-weight: 500;
+			transition: all 0.3s ease;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		}
+
+		.pattern-button:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		}
+
+		.pattern-button.active {
+			background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+			box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+		}
+
+		.pattern-button:nth-child(2) {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		}
+
+		.pattern-button:nth-child(3) {
+			background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+		}
+
+		.pattern-button:nth-child(4) {
+			background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+		}
+
+		.pattern-button:nth-child(5) {
+			background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+		}
+
+		.pattern-button:nth-child(6) {
+			background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+		}
+
+		.clear-button {
+			background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
+			margin-top: 15px;
+		}
+
+		.clear-button:hover {
+			background: linear-gradient(135deg, #ee5a52 0%, #d63447 100%) !important;
+		}
+
+		.info {
+			font-size: 12px;
+			color: #5a6c7d;
+			margin-top: 15px;
+			line-height: 1.4;
+			border-top: 1px solid #ecf0f1;
+			padding-top: 12px;
+		}
+
+		.pattern-info {
+			font-weight: 600;
+			color: #2c3e50;
+			margin-bottom: 8px;
+		}
+
+		.info strong {
+			color: #34495e;
+		}
+	</style>
+
+	<script type="text/javascript">
+		// Fibonacci ratios for harmonic patterns
+		const FIBONACCI_RATIOS = {
+			0.236: 0.236,
+			0.382: 0.382,
+			0.500: 0.500,
+			0.618: 0.618,
+			0.786: 0.786,
+			0.886: 0.886,
+			1.000: 1.000,
+			1.130: 1.130,
+			1.272: 1.272,
+			1.414: 1.414,
+			1.618: 1.618,
+			2.000: 2.000,
+			2.236: 2.236,
+			2.618: 2.618
+		};
+
+		// Harmonic pattern definitions
+		const HARMONIC_PATTERNS = {
+			gartley: {
+				name: "Gartley",
+				ratios: {
+					AB_XA: [0.618],
+					BC_AB: [0.382, 0.886],
+					CD_BC: [1.272, 1.618],
+					AD_XA: [0.786]
 				},
-				butterfly: {
-					name: "Butterfly",
-					ratios: {
-						AB_XA: [0.786],
-						BC_AB: [0.382, 0.886],
-						CD_BC: [1.618, 2.618],
-						AD_XA: [1.272, 1.618]
-					},
-					color: "#4ECDC4"
+				color: "#FF6B6B"
+			},
+			butterfly: {
+				name: "Butterfly",
+				ratios: {
+					AB_XA: [0.786],
+					BC_AB: [0.382, 0.886],
+					CD_BC: [1.618, 2.618],
+					AD_XA: [1.272, 1.618]
 				},
-				bat: {
-					name: "Bat",
-					ratios: {
-						AB_XA: [0.382, 0.500],
-						BC_AB: [0.382, 0.886],
-						CD_BC: [1.618, 2.618],
-						AD_XA: [0.886]
-					},
-					color: "#45B7D1"
+				color: "#4ECDC4"
+			},
+			bat: {
+				name: "Bat",
+				ratios: {
+					AB_XA: [0.382, 0.500],
+					BC_AB: [0.382, 0.886],
+					CD_BC: [1.618, 2.618],
+					AD_XA: [0.886]
 				},
-				crab: {
-					name: "Crab",
-					ratios: {
-						AB_XA: [0.382, 0.618],
-						BC_AB: [0.382, 0.886],
-						CD_BC: [2.236, 3.618],
-						AD_XA: [1.618]
-					},
-					color: "#96CEB4"
+				color: "#45B7D1"
+			},
+			crab: {
+				name: "Crab",
+				ratios: {
+					AB_XA: [0.382, 0.618],
+					BC_AB: [0.382, 0.886],
+					CD_BC: [2.236, 3.618],
+					AD_XA: [1.618]
 				},
-				shark: {
-					name: "Shark",
-					ratios: {
-						AB_XA: [0.382, 0.618],
-						BC_AB: [1.130, 1.618],
-						CD_BC: [1.618, 2.236],
-						AD_XA: [0.886, 1.130]
-					},
-					color: "#FFEAA7"
-				}
-			};
-
-			let widget;
-			let currentPatterns = [];
-			let activeScanners = new Set();
-
-			function getParameterByName(name) {
-				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-					results = regex.exec(location.search);
-				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+				color: "#96CEB4"
+			},
+			shark: {
+				name: "Shark",
+				ratios: {
+					AB_XA: [0.382, 0.618],
+					BC_AB: [1.130, 1.618],
+					CD_BC: [1.618, 2.236],
+					AD_XA: [0.886, 1.130]
+				},
+				color: "#FFEAA7"
 			}
+		};
 
-			// Calculate Fibonacci retracement/extension
-			function calculateFibRatio(point1, point2, point3) {
-				const move1 = Math.abs(point2 - point1);
-				const move2 = Math.abs(point3 - point2);
-				return move1 === 0 ? 0 : move2 / move1;
-			}
+		let widget;
+		let currentPatterns = [];
+		let activeScanners = new Set();
 
-			// Check if ratio is within tolerance of target ratios
-			function isValidRatio(actualRatio, targetRatios, tolerance = 0.05) {
-				return targetRatios.some(target => 
-					Math.abs(actualRatio - target) <= tolerance
-				);
-			}
+		function getParameterByName(name) {
+			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(location.search);
+			return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}
 
-			// Detect zigzag swing points - OPTIMIZED FOR SPEED
-			function detectSwingPoints(bars, minSwingSize = 3) {  // Reduced default for speed
-				const swings = [];
-				if (bars.length < minSwingSize * 2) return swings;
+		// Calculate Fibonacci retracement/extension
+		function calculateFibRatio(point1, point2, point3) {
+			const move1 = Math.abs(point2 - point1);
+			const move2 = Math.abs(point3 - point2);
+			return move1 === 0 ? 0 : move2 / move1;
+		}
 
-				console.log(`⚡ Fast swing detection on ${bars.length} bars...`);
-				
-				// Use step size for faster processing
-				const stepSize = Math.max(1, Math.floor(bars.length / 100));  // Adaptive step size
-				
-				for (let i = minSwingSize; i < bars.length - minSwingSize; i += stepSize) {
-					const currentHigh = bars[i].high;
-					const currentLow = bars[i].low;
-					
-					// Check for swing high/low with smaller window for speed
-					let isSwingHigh = true;
-					let isSwingLow = true;
-					
-					const checkRange = Math.min(minSwingSize, 5);  // Limit check range for speed
-					
-					for (let j = i - checkRange; j <= i + checkRange; j++) {
-						if (j !== i && j >= 0 && j < bars.length) {
-							if (bars[j].high >= currentHigh) isSwingHigh = false;
-							if (bars[j].low <= currentLow) isSwingLow = false;
-						}
+		// Check if ratio is within tolerance of target ratios
+		function isValidRatio(actualRatio, targetRatios, tolerance = 0.05) {
+			return targetRatios.some(target =>
+				Math.abs(actualRatio - target) <= tolerance
+			);
+		}
+
+		// Detect zigzag swing points - OPTIMIZED FOR SPEED
+		function detectSwingPoints(bars, minSwingSize = 3) {  // Reduced default for speed
+			const swings = [];
+			if (bars.length < minSwingSize * 2) return swings;
+
+			console.log(`⚡ Fast swing detection on ${bars.length} bars...`);
+
+			// Use step size for faster processing
+			const stepSize = Math.max(1, Math.floor(bars.length / 100));  // Adaptive step size
+
+			for (let i = minSwingSize; i < bars.length - minSwingSize; i += stepSize) {
+				const currentHigh = bars[i].high;
+				const currentLow = bars[i].low;
+
+				// Check for swing high/low with smaller window for speed
+				let isSwingHigh = true;
+				let isSwingLow = true;
+
+				const checkRange = Math.min(minSwingSize, 5);  // Limit check range for speed
+
+				for (let j = i - checkRange; j <= i + checkRange; j++) {
+					if (j !== i && j >= 0 && j < bars.length) {
+						if (bars[j].high >= currentHigh) isSwingHigh = false;
+						if (bars[j].low <= currentLow) isSwingLow = false;
 					}
-					
-					if (isSwingHigh) {
-						swings.push({
-							index: i,
-							time: bars[i].time,
-							price: currentHigh,
-							type: 'high'
-						});
-					} else if (isSwingLow) {
-						swings.push({
-							index: i,
-							time: bars[i].time,
-							price: currentLow,
-							type: 'low'
-						});
-					}
 				}
-				
-				const sortedSwings = swings.sort((a, b) => a.time - b.time);
-				console.log(`⚡ Fast swing detection completed: ${sortedSwings.length} swings`);
-				return sortedSwings;
+
+				if (isSwingHigh) {
+					swings.push({
+						index: i,
+						time: bars[i].time,
+						price: currentHigh,
+						type: 'high'
+					});
+				} else if (isSwingLow) {
+					swings.push({
+						index: i,
+						time: bars[i].time,
+						price: currentLow,
+						type: 'low'
+					});
+				}
 			}
 
-			// Validate harmonic pattern
-			function validateHarmonicPattern(X, A, B, C, D, patternDef) {
-				const AB_XA = calculateFibRatio(X.price, A.price, B.price);
-				const BC_AB = calculateFibRatio(A.price, B.price, C.price);
-				const CD_BC = calculateFibRatio(B.price, C.price, D.price);
-				const AD_XA = calculateFibRatio(X.price, A.price, D.price);
+			const sortedSwings = swings.sort((a, b) => a.time - b.time);
+			console.log(`⚡ Fast swing detection completed: ${sortedSwings.length} swings`);
+			return sortedSwings;
+		}
 
-				const ratios = patternDef.ratios;
-				
-				return isValidRatio(AB_XA, ratios.AB_XA) &&
-					   isValidRatio(BC_AB, ratios.BC_AB) &&
-					   isValidRatio(CD_BC, ratios.CD_BC) &&
-					   isValidRatio(AD_XA, ratios.AD_XA);
-			}
+		// Validate harmonic pattern
+		function validateHarmonicPattern(X, A, B, C, D, patternDef) {
+			const AB_XA = calculateFibRatio(X.price, A.price, B.price);
+			const BC_AB = calculateFibRatio(A.price, B.price, C.price);
+			const CD_BC = calculateFibRatio(B.price, C.price, D.price);
+			const AD_XA = calculateFibRatio(X.price, A.price, D.price);
 
-			// Find harmonic patterns in swing data - OPTIMIZED FOR SPEED
-			function findHarmonicPatterns(swings, patternType) {
-				const patterns = [];
-				const patternDef = HARMONIC_PATTERNS[patternType];
-				
-				if (swings.length < 5) return patterns;
+			const ratios = patternDef.ratios;
 
-				console.log(`⚡ Fast pattern search in ${swings.length} swings...`);
-				
-				// Limit search for speed - only check recent swings
-				const maxSwings = Math.min(swings.length, 20);  // Limit to last 20 swings for speed
-				const recentSwings = swings.slice(-maxSwings);
-				
-				// Use optimized nested loops with early breaks
-				const maxPatterns = 3;  // Limit patterns found for speed
-				
-				for (let i = 0; i < recentSwings.length - 4 && patterns.length < maxPatterns; i++) {
-					for (let j = i + 1; j < recentSwings.length - 3 && patterns.length < maxPatterns; j++) {
-						for (let k = j + 1; k < recentSwings.length - 2 && patterns.length < maxPatterns; k++) {
-							for (let l = k + 1; l < recentSwings.length - 1 && patterns.length < maxPatterns; l++) {
-								for (let m = l + 1; m < recentSwings.length && patterns.length < maxPatterns; m++) {
-									const X = recentSwings[i];
-									const A = recentSwings[j];
-									const B = recentSwings[k];
-									const C = recentSwings[l];
-									const D = recentSwings[m];
+			return isValidRatio(AB_XA, ratios.AB_XA) &&
+				isValidRatio(BC_AB, ratios.BC_AB) &&
+				isValidRatio(CD_BC, ratios.CD_BC) &&
+				isValidRatio(AD_XA, ratios.AD_XA);
+		}
 
-									// Quick alternating pattern check first (fastest filter)
-									if (X.type !== B.type && X.type !== D.type && 
-										A.type !== C.type && A.type === X.type && 
-										B.type === C.type) {
-										
-										// Only do expensive validation if basic pattern matches
-										if (validateHarmonicPattern(X, A, B, C, D, patternDef)) {
-											patterns.push({
-												type: patternType,
-												points: [X, A, B, C, D],
-												color: patternDef.color,
-												name: patternDef.name,
-												bullish: (X.type === 'low' && A.type === 'high'),
-												timestamp: Date.now()
-											});
-											
-											// Break early if we found enough patterns for speed
-											if (patterns.length >= maxPatterns) break;
-										}
+		// Find harmonic patterns in swing data - OPTIMIZED FOR SPEED
+		function findHarmonicPatterns(swings, patternType) {
+			const patterns = [];
+			const patternDef = HARMONIC_PATTERNS[patternType];
+
+			if (swings.length < 5) return patterns;
+
+			console.log(`⚡ Fast pattern search in ${swings.length} swings...`);
+
+			// Limit search for speed - only check recent swings
+			const maxSwings = Math.min(swings.length, 20);  // Limit to last 20 swings for speed
+			const recentSwings = swings.slice(-maxSwings);
+
+			// Use optimized nested loops with early breaks
+			const maxPatterns = 3;  // Limit patterns found for speed
+
+			for (let i = 0; i < recentSwings.length - 4 && patterns.length < maxPatterns; i++) {
+				for (let j = i + 1; j < recentSwings.length - 3 && patterns.length < maxPatterns; j++) {
+					for (let k = j + 1; k < recentSwings.length - 2 && patterns.length < maxPatterns; k++) {
+						for (let l = k + 1; l < recentSwings.length - 1 && patterns.length < maxPatterns; l++) {
+							for (let m = l + 1; m < recentSwings.length && patterns.length < maxPatterns; m++) {
+								const X = recentSwings[i];
+								const A = recentSwings[j];
+								const B = recentSwings[k];
+								const C = recentSwings[l];
+								const D = recentSwings[m];
+
+								// Quick alternating pattern check first (fastest filter)
+								if (X.type !== B.type && X.type !== D.type &&
+									A.type !== C.type && A.type === X.type &&
+									B.type === C.type) {
+
+									// Only do expensive validation if basic pattern matches
+									if (validateHarmonicPattern(X, A, B, C, D, patternDef)) {
+										patterns.push({
+											type: patternType,
+											points: [X, A, B, C, D],
+											color: patternDef.color,
+											name: patternDef.name,
+											bullish: (X.type === 'low' && A.type === 'high'),
+											timestamp: Date.now()
+										});
+
+										// Break early if we found enough patterns for speed
+										if (patterns.length >= maxPatterns) break;
 									}
 								}
 							}
 						}
 					}
 				}
-				
-				console.log(`⚡ Fast pattern search completed: ${patterns.length} patterns found`);
-				return patterns;
 			}
 
-			// Draw pattern on chart - OPTIMIZED FOR SPEED
-			function drawHarmonicPattern(pattern) {
-				if (!widget || !widget.chart) return;
+			console.log(`⚡ Fast pattern search completed: ${patterns.length} patterns found`);
+			return patterns;
+		}
 
-				console.log(`⚡ Fast drawing ${pattern.name} pattern...`);
-				const chart = widget.chart();
-				const points = pattern.points;
-				
-				try {
-					// Use requestAnimationFrame for smooth drawing
-					requestAnimationFrame(() => {
-						// Draw pattern lines with optimized settings
-						const drawPromises = [];
-						
-						for (let i = 0; i < points.length - 1; i++) {
-							const promise = chart.createShape(
-								{ time: points[i].time, price: points[i].price },
-								{
-									shape: 'trend_line',
-									overrides: {
-										linecolor: pattern.color,
-										linewidth: 1,  // Thinner lines for speed
-										linestyle: 0,
-										transparency: 20
-									},
-									zOrder: 'top',
-									lock: false,
-									disableSelection: true,  // Disable selection for speed
-									disableSave: true       // Disable save for speed
-								}
-							);
-							
-							if (promise && promise.then) {
-								drawPromises.push(
-									promise.then(shapeId => {
-										if (shapeId && shapeId.setPoints) {
-											shapeId.setPoints([
-												{ time: points[i].time, price: points[i].price },
-												{ time: points[i + 1].time, price: points[i + 1].price }
-											]);
-										}
-									}).catch(err => console.log('⚠️ Line draw warning:', err))
-								);
-							}
-						}
+		// Draw pattern on chart - OPTIMIZED FOR SPEED
+		function drawHarmonicPattern(pattern) {
+			if (!widget || !widget.chart) return;
 
-						// Add simplified pattern label (faster)
-						const labelPromise = chart.createShape(
-							{ time: points[4].time, price: points[4].price },
+			console.log(`⚡ Fast drawing ${pattern.name} pattern...`);
+			const chart = widget.chart();
+			const points = pattern.points;
+
+			try {
+				// Use requestAnimationFrame for smooth drawing
+				requestAnimationFrame(() => {
+					// Draw pattern lines with optimized settings
+					const drawPromises = [];
+
+					for (let i = 0; i < points.length - 1; i++) {
+						const promise = chart.createShape(
+							{ time: points[i].time, price: points[i].price },
 							{
-								shape: 'text',
-								text: `${pattern.name} ${pattern.bullish ? '🟢' : '🔴'}`,
+								shape: 'trend_line',
 								overrides: {
-									color: pattern.color,
-									fontsize: 10,  // Smaller font for speed
-									bold: false     // No bold for speed
+									linecolor: pattern.color,
+									linewidth: 1,  // Thinner lines for speed
+									linestyle: 0,
+									transparency: 20
 								},
 								zOrder: 'top',
-								disableSelection: true,
-								disableSave: true
+								lock: false,
+								disableSelection: true,  // Disable selection for speed
+								disableSave: true       // Disable save for speed
 							}
 						);
 
-						if (labelPromise && labelPromise.then) {
-							drawPromises.push(labelPromise.catch(err => console.log('⚠️ Label draw warning:', err)));
+						if (promise && promise.then) {
+							drawPromises.push(
+								promise.then(shapeId => {
+									if (shapeId && shapeId.setPoints) {
+										shapeId.setPoints([
+											{ time: points[i].time, price: points[i].price },
+											{ time: points[i + 1].time, price: points[i + 1].price }
+										]);
+									}
+								}).catch(err => console.log('⚠️ Line draw warning:', err))
+							);
 						}
+					}
 
-						// Wait for all drawings to complete
-						Promise.all(drawPromises).then(() => {
-							console.log(`✅ Fast drew ${pattern.name} pattern`);
-						}).catch(err => {
-							console.log('⚠️ Some drawing operations had warnings:', err);
-						});
+					// Add simplified pattern label (faster)
+					const labelPromise = chart.createShape(
+						{ time: points[4].time, price: points[4].price },
+						{
+							shape: 'text',
+							text: `${pattern.name} ${pattern.bullish ? '🟢' : '🔴'}`,
+							overrides: {
+								color: pattern.color,
+								fontsize: 10,  // Smaller font for speed
+								bold: false     // No bold for speed
+							},
+							zOrder: 'top',
+							disableSelection: true,
+							disableSave: true
+						}
+					);
+
+					if (labelPromise && labelPromise.then) {
+						drawPromises.push(labelPromise.catch(err => console.log('⚠️ Label draw warning:', err)));
+					}
+
+					// Wait for all drawings to complete
+					Promise.all(drawPromises).then(() => {
+						console.log(`✅ Fast drew ${pattern.name} pattern`);
+					}).catch(err => {
+						console.log('⚠️ Some drawing operations had warnings:', err);
 					});
-
-				} catch (error) {
-					console.log('⚠️ Fast drawing warning:', error);
-				}
-			}
-
-			// Scan for patterns - OPTIMIZED FOR SPEED
-			function scanForPatterns(patternType) {
-				if (!widget || !widget.chart) return;
-
-				console.log(`⚡ FAST scanning for ${patternType} patterns...`);
-				const chart = widget.chart();
-				
-				// Use faster data access method
-				chart.executeActionById("chartProperties");
-				
-				// Get visible bars only for speed
-				const visibleRange = chart.getVisibleRange();
-				
-				// Faster bar access with smaller dataset
-				chart.getBars().then(bars => {
-					if (!bars || bars.length < 20) {  // Reduced minimum for speed
-						console.log('⚠️ Not enough data for fast pattern analysis');
-						return;
-					}
-
-					// Use only recent data for speed (last 200 bars)
-					const recentBars = bars.slice(-200);
-					console.log(`⚡ Analyzing ${recentBars.length} recent bars for speed`);
-					
-					const swings = detectSwingPoints(recentBars, 3);  // Reduced swing size for speed
-					console.log(`⚡ Detected ${swings.length} swing points in fast mode`);
-					
-					const patterns = findHarmonicPatterns(swings, patternType);
-					console.log(`⚡ Found ${patterns.length} ${patternType} patterns quickly`);
-					
-					// Draw patterns with batching for speed
-					if (patterns.length > 0) {
-						patterns.slice(0, 5).forEach((pattern, index) => {  // Limit to 5 patterns for speed
-							setTimeout(() => {
-								drawHarmonicPattern(pattern);
-								currentPatterns.push(pattern);
-							}, index * 100);  // Stagger drawing for smooth UI
-						});
-					}
-
-					updatePatternInfo();
-					console.log(`✅ Fast pattern scan completed in optimized mode`);
-					
-				}).catch(error => {
-					console.error('❌ Fast pattern scan error:', error);
 				});
-			}
 
-			// Clear all patterns
-			function clearAllPatterns() {
-				if (!widget || !widget.chart) return;
-				
-				try {
-					widget.chart().removeAllShapes();
-					currentPatterns = [];
-					updatePatternInfo();
-				} catch (error) {
-					console.error('Error clearing patterns:', error);
+			} catch (error) {
+				console.log('⚠️ Fast drawing warning:', error);
+			}
+		}
+
+		// Scan for patterns - OPTIMIZED FOR SPEED
+		function scanForPatterns(patternType) {
+			if (!widget || !widget.chart) return;
+
+			console.log(`⚡ FAST scanning for ${patternType} patterns...`);
+			const chart = widget.chart();
+
+			// Use faster data access method
+			chart.executeActionById("chartProperties");
+
+			// Get visible bars only for speed
+			const visibleRange = chart.getVisibleRange();
+
+			// Faster bar access with smaller dataset
+			chart.getBars().then(bars => {
+				if (!bars || bars.length < 20) {  // Reduced minimum for speed
+					console.log('⚠️ Not enough data for fast pattern analysis');
+					return;
 				}
-			}
 
-			// Update pattern information
-			function updatePatternInfo() {
+				// Use only recent data for speed (last 200 bars)
+				const recentBars = bars.slice(-200);
+				console.log(`⚡ Analyzing ${recentBars.length} recent bars for speed`);
+
+				const swings = detectSwingPoints(recentBars, 3);  // Reduced swing size for speed
+				console.log(`⚡ Detected ${swings.length} swing points in fast mode`);
+
+				const patterns = findHarmonicPatterns(swings, patternType);
+				console.log(`⚡ Found ${patterns.length} ${patternType} patterns quickly`);
+
+				// Draw patterns with batching for speed
+				if (patterns.length > 0) {
+					patterns.slice(0, 5).forEach((pattern, index) => {  // Limit to 5 patterns for speed
+						setTimeout(() => {
+							drawHarmonicPattern(pattern);
+							currentPatterns.push(pattern);
+						}, index * 100);  // Stagger drawing for smooth UI
+					});
+				}
+
+				updatePatternInfo();
+				console.log(`✅ Fast pattern scan completed in optimized mode`);
+
+			}).catch(error => {
+				console.error('❌ Fast pattern scan error:', error);
+			});
+		}
+
+		// Clear all patterns
+		function clearAllPatterns() {
+			if (!widget || !widget.chart) return;
+
+			try {
+				widget.chart().removeAllShapes();
+				currentPatterns = [];
+				updatePatternInfo();
+			} catch (error) {
+				console.error('Error clearing patterns:', error);
+			}
+		}
+
+		// Update pattern information
+		function updatePatternInfo() {
+			const infoDiv = document.querySelector('.pattern-info');
+			if (infoDiv) {
+				infoDiv.innerHTML = `Patterns found: ${currentPatterns.length}`;
+			}
+		}
+
+		// Toggle pattern scanner
+		function togglePatternScanner(patternType) {
+			const button = document.querySelector(`[data-pattern="${patternType}"]`);
+
+			if (activeScanners.has(patternType)) {
+				activeScanners.delete(patternType);
+				button.classList.remove('active');
+			} else {
+				activeScanners.add(patternType);
+				button.classList.add('active');
+				scanForPatterns(patternType);
+			}
+		}
+
+		function initOnReady() {
+			// Use our LIVE data server with real yfinance data - OPTIMIZED FOR SPEED
+			var liveDatafeedUrl = "http://localhost:8083";
+
+			widget = window.tvWidget = new TradingView.widget({
+				debug: false, // Disable debug for speed
+				fullscreen: true,
+				symbol: 'AAPL',
+				interval: '1D',
+				container: "tv_chart_container",
+				autosize: true,
+
+				// Use our live data server - OPTIMIZED
+				datafeed: new Datafeeds.UDFCompatibleDatafeed(liveDatafeedUrl, undefined, {
+					maxResponseLength: 500,  // Reduced for speed
+					expectedOrder: 'latestFirst',
+				}),
+				library_path: "charting_library/",
+				locale: getParameterByName('lang') || "en",
+
+				// SPEED OPTIMIZATIONS
+				disabled_features: [
+					"use_localstorage_for_settings",
+					"left_toolbar",
+					"header_widget",
+					"timeframes_toolbar",
+					"edit_buttons_in_legend",
+					"context_menus",
+					"control_bar",
+					"border_around_the_chart"
+				],
+				enabled_features: [
+					"study_templates",
+					"hide_last_na_study_output"
+				],
+
+				// Simplified for speed
+				loading_screen: { backgroundColor: "#131722" },
+
+				theme: getParameterByName('theme') || "dark",
+				overrides: {
+					"mainSeriesProperties.candleStyle.upColor": "#26a69a",
+					"mainSeriesProperties.candleStyle.downColor": "#ef5350",
+					"mainSeriesProperties.candleStyle.drawWick": true,
+					"mainSeriesProperties.candleStyle.drawBorder": true,
+					"mainSeriesProperties.candleStyle.borderUpColor": "#26a69a",
+					"mainSeriesProperties.candleStyle.borderDownColor": "#ef5350",
+					"mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
+					"mainSeriesProperties.candleStyle.wickDownColor": "#ef5350",
+
+					// Speed optimizations
+					"paneProperties.background": "#131722",
+					"paneProperties.vertGridProperties.color": "#363c4e",
+					"paneProperties.horzGridProperties.color": "#363c4e",
+					"symbolWatermarkProperties.transparency": 90,
+					"scalesProperties.textColor": "#b2b5be",
+				},
+
+				// Fast loading settings
+				time_frames: [],
+				charts_storage_url: null, // Disable cloud storage for speed
+				client_id: null,
+				user_id: null
+			});
+
+			widget.onChartReady(() => {
+				console.log('⚡ ULTRA-FAST Chart ready with LIVE 2025 market data!');
+				console.log('📊 Optimized data server: http://localhost:8083');
+				console.log('📈 Symbols available:', ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'SPY', 'QQQ', '+50 more!']);
+				console.log('� Load time: MAXIMUM SPEED MODE');
+
+				// Immediate UI feedback
 				const infoDiv = document.querySelector('.pattern-info');
 				if (infoDiv) {
-					infoDiv.innerHTML = `Patterns found: ${currentPatterns.length}`;
+					infoDiv.innerHTML = 'Loading patterns... ⚡';
 				}
-			}
 
-			// Toggle pattern scanner
-			function togglePatternScanner(patternType) {
-				const button = document.querySelector(`[data-pattern="${patternType}"]`);
-				
-				if (activeScanners.has(patternType)) {
-					activeScanners.delete(patternType);
-					button.classList.remove('active');
-				} else {
-					activeScanners.add(patternType);
-					button.classList.add('active');
-					scanForPatterns(patternType);
-				}
-			}
+				// Ultra-fast pattern scan start
+				setTimeout(() => {
+					console.log('🔍 Starting ULTRA-FAST harmonic pattern scan...');
+					togglePatternScanner('gartley');
+				}, 800);  // Reduced to 0.8 seconds for ultra-fast loading
+			});
 
-			function initOnReady() {
-				// Use our LIVE data server with real yfinance data - OPTIMIZED FOR SPEED
-				var liveDatafeedUrl = "http://localhost:8083";
-				
-				widget = window.tvWidget = new TradingView.widget({
-					debug: false, // Disable debug for speed
-					fullscreen: true,
-					symbol: 'AAPL',
-					interval: '1D',
-					container: "tv_chart_container",
-					autosize: true,
+			window.frames[0].focus();
+		}
 
-					// Use our live data server - OPTIMIZED
-					datafeed: new Datafeeds.UDFCompatibleDatafeed(liveDatafeedUrl, undefined, {
-						maxResponseLength: 500,  // Reduced for speed
-						expectedOrder: 'latestFirst',
-					}),
-					library_path: "charting_library/",
-					locale: getParameterByName('lang') || "en",
+		window.addEventListener('DOMContentLoaded', initOnReady, false);
+	</script>
+</head>
 
-					// SPEED OPTIMIZATIONS
-					disabled_features: [
-						"use_localstorage_for_settings",
-						"left_toolbar",
-						"header_widget",
-						"timeframes_toolbar",
-						"edit_buttons_in_legend",
-						"context_menus",
-						"control_bar",
-						"border_around_the_chart"
-					],
-					enabled_features: [
-						"study_templates",
-						"hide_last_na_study_output"
-					],
-					
-					// Simplified for speed
-					loading_screen: { backgroundColor: "#131722" },
-					
-					theme: getParameterByName('theme') || "dark",
-					overrides: {
-						"mainSeriesProperties.candleStyle.upColor": "#26a69a",
-						"mainSeriesProperties.candleStyle.downColor": "#ef5350",
-						"mainSeriesProperties.candleStyle.drawWick": true,
-						"mainSeriesProperties.candleStyle.drawBorder": true,
-						"mainSeriesProperties.candleStyle.borderUpColor": "#26a69a",
-						"mainSeriesProperties.candleStyle.borderDownColor": "#ef5350",
-						"mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
-						"mainSeriesProperties.candleStyle.wickDownColor": "#ef5350",
-						
-						// Speed optimizations
-						"paneProperties.background": "#131722",
-						"paneProperties.vertGridProperties.color": "#363c4e",
-						"paneProperties.horzGridProperties.color": "#363c4e",
-						"symbolWatermarkProperties.transparency": 90,
-						"scalesProperties.textColor": "#b2b5be",
-					},
-					
-					// Fast loading settings
-					time_frames: [],
-					charts_storage_url: null, // Disable cloud storage for speed
-					client_id: null,
-					user_id: null
-				});
+<body>
+	<div id="tv_chart_container"></div>
 
-				widget.onChartReady(() => {
-					console.log('⚡ ULTRA-FAST Chart ready with LIVE 2025 market data!');
-					console.log('📊 Optimized data server: http://localhost:8083');
-					console.log('📈 Symbols available:', ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'SPY', 'QQQ', '+50 more!']);
-					console.log('� Load time: MAXIMUM SPEED MODE');
-					
-					// Immediate UI feedback
-					const infoDiv = document.querySelector('.pattern-info');
-					if (infoDiv) {
-						infoDiv.innerHTML = 'Loading patterns... ⚡';
-					}
-					
-					// Ultra-fast pattern scan start
-					setTimeout(() => {
-						console.log('🔍 Starting ULTRA-FAST harmonic pattern scan...');
-						togglePatternScanner('gartley');
-					}, 800);  // Reduced to 0.8 seconds for ultra-fast loading
-				});
+	<div class="controls">
+		<h3>Harmonic Pattern Scanner</h3>
 
-				window.frames[0].focus();
-			}
+		<button class="pattern-button" data-pattern="gartley" onclick="togglePatternScanner('gartley')">
+			⚡ Scan Gartley Patterns
+		</button>
 
-			window.addEventListener('DOMContentLoaded', initOnReady, false);
-		</script>
-	</head>
+		<button class="pattern-button" data-pattern="butterfly" onclick="togglePatternScanner('butterfly')">
+			⚡ Scan Butterfly Patterns
+		</button>
 
-	<body>
-		<div id="tv_chart_container"></div>
-		
-		<div class="controls">
-			<h3>🔍 Harmonic Pattern Scanner - LIVE DATA</h3>
-			
-			<button class="pattern-button" data-pattern="gartley" onclick="togglePatternScanner('gartley')">
-				🦋 Scan Gartley Patterns
-			</button>
-			
-			<button class="pattern-button" data-pattern="butterfly" onclick="togglePatternScanner('butterfly')">
-				🦋 Scan Butterfly Patterns
-			</button>
-			
-			<button class="pattern-button" data-pattern="bat" onclick="togglePatternScanner('bat')">
-				🦇 Scan Bat Patterns
-			</button>
-			
-			<button class="pattern-button" data-pattern="crab" onclick="togglePatternScanner('crab')">
-				🦀 Scan Crab Patterns
-			</button>
-			
-			<button class="pattern-button" data-pattern="shark" onclick="togglePatternScanner('shark')">
-				🦈 Scan Shark Patterns
-			</button>
-			
-			<button class="pattern-button clear-button" onclick="clearAllPatterns()">
-				🗑️ Clear All Patterns
-			</button>
-			
-			<div class="info">
-				<div class="pattern-info">Patterns found: 0</div>
-				<br>
-				<strong>📊 LIVE Data Source:</strong> Yahoo Finance<br>
-				<strong>📅 Current Date:</strong> August 8, 2025<br>
-				<strong>🔄 Updates:</strong> Real-time market data<br>
-				<br>
-				<strong>Pattern Ratios:</strong><br>
-				• Gartley: AB=61.8% XA, CD=78.6% XA<br>
-				• Butterfly: AB=78.6% XA, CD=127%-161.8% XA<br>
-				• Bat: AB=38.2%-50% XA, CD=88.6% XA<br>
-				• Crab: CD=161.8% XA<br>
-				• Shark: CD=88.6%-113% XA
-			</div>
+		<button class="pattern-button" data-pattern="bat" onclick="togglePatternScanner('bat')">
+			⚡ Scan Bat Patterns
+		</button>
+
+		<button class="pattern-button" data-pattern="crab" onclick="togglePatternScanner('crab')">
+			⚡ Scan Crab Patterns
+		</button>
+
+		<button class="pattern-button" data-pattern="shark" onclick="togglePatternScanner('shark')">
+			⚡ Scan Shark Patterns
+		</button>
+
+		<button class="pattern-button clear-button" onclick="clearAllPatterns()">
+			🗑️ Clear All Patterns
+		</button>
+
+		<div class="info">
+			<div class="pattern-info">Patterns found: 0</div>
+
+			<strong>Pattern Ratios:</strong><br>
+			⟐ Gartley: AB=61.8% XA, CD=78.6% XA<br>
+			⟐ Butterfly: AB=78.6% XA, CD=127%-161.8% XA<br>
+			⟐ Bat: AB=38.2%-50% XA, CD=88.6% XA<br>
+			⟐ Crab: CD=161.8% XA<br>
+			⟐ Shark: CD=88.6%-113% XA
 		</div>
-	</body>
+	</div>
+</body>
+
 </html>

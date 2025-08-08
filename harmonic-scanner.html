@@ -1,742 +1,764 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-		<title>TradingView - Professional Harmonic Pattern Scanner</title>
-		
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
-		
-		<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
-		<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
-		
-		<style>
-			body {
-				margin: 0px;
-				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-				background: #131722;
-				color: #d1d4dc;
-			}
-			
-			.scanner-controls {
-				position: fixed;
-				top: 15px;
-				right: 15px;
-				background: rgba(19, 23, 34, 0.98);
-				border: 1px solid #2a2e39;
-				border-radius: 12px;
-				padding: 20px;
-				z-index: 1000;
-				width: 340px;
-				max-height: 85vh;
-				overflow-y: auto;
-				box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-			}
-			
-			.scanner-title {
-				text-align: center;
-				margin: 0 0 20px 0;
-				font-size: 18px;
-				font-weight: 600;
-				color: #4CAF50;
-				border-bottom: 2px solid #2a2e39;
-				padding-bottom: 15px;
-			}
-			
-			.instrument-section {
-				background: #1a1e27;
-				border-radius: 8px;
-				padding: 15px;
-				margin-bottom: 20px;
-				border: 1px solid #2a2e39;
-			}
-			
-			.section-title {
-				font-size: 14px;
-				font-weight: 600;
-				color: #d1d4dc;
-				margin-bottom: 12px;
-			}
-			
-			.symbol-grid {
-				display: grid;
-				grid-template-columns: repeat(3, 1fr);
-				gap: 6px;
-				margin-bottom: 12px;
-			}
-			
-			.symbol-btn {
-				padding: 8px 6px;
-				background: #2a2e39;
-				color: #d1d4dc;
-				border: 1px solid #434651;
-				border-radius: 6px;
-				cursor: pointer;
-				font-size: 11px;
-				text-align: center;
-				transition: all 0.2s ease;
-			}
-			
-			.symbol-btn:hover {
-				background: #363a45;
-				border-color: #4CAF50;
-			}
-			
-			.symbol-btn.active {
-				background: #4CAF50;
-				color: white;
-				border-color: #4CAF50;
-			}
-			
-			.timeframe-selector {
-				width: 100%;
-				padding: 10px;
-				background: #2a2e39;
-				color: white;
-				border: 1px solid #434651;
-				border-radius: 6px;
-				font-size: 13px;
-			}
-			
-			.pattern-section {
-				background: #1a1e27;
-				border-radius: 8px;
-				padding: 15px;
-				margin-bottom: 20px;
-				border: 1px solid #2a2e39;
-			}
-			
-			.pattern-btn {
-				display: block;
-				width: 100%;
-				margin: 8px 0;
-				padding: 14px;
-				background: #2a2e39;
-				color: white;
-				border: 1px solid #434651;
-				border-radius: 8px;
-				cursor: pointer;
-				font-size: 14px;
-				position: relative;
-				transition: all 0.2s ease;
-			}
-			
-			.pattern-btn:hover {
-				background: #363a45;
-				transform: translateY(-1px);
-			}
-			
-			.pattern-btn.active {
-				background: linear-gradient(135deg, #1976d2, #2196F3);
-				border-color: #1976d2;
-			}
-			
-			.pattern-btn.scanning {
-				background: linear-gradient(135deg, #ff9800, #ffc107);
-				animation: scanPulse 1.5s infinite;
-			}
-			
-			@keyframes scanPulse {
-				0%, 100% { opacity: 1; }
-				50% { opacity: 0.8; }
-			}
-			
-			.pattern-count {
-				position: absolute;
-				right: 12px;
-				top: 50%;
-				transform: translateY(-50%);
-				background: #4CAF50;
-				color: white;
-				padding: 3px 8px;
-				border-radius: 12px;
-				font-size: 10px;
-				font-weight: bold;
-				display: none;
-			}
-			
-			.clear-btn {
-				background: linear-gradient(135deg, #f44336, #e53935) !important;
-				border-color: #f44336 !important;
-			}
-			
-			.status-panel {
-				background: #2a2e39;
-				border-radius: 8px;
-				padding: 12px;
-				margin-bottom: 20px;
-				border-left: 4px solid #4CAF50;
-			}
-			
-			.status-text {
-				font-size: 12px;
-				line-height: 1.4;
-			}
-			
-			.chart-info {
-				background: #1a1e27;
-				border-radius: 6px;
-				padding: 10px;
-				margin-bottom: 15px;
-				font-size: 11px;
-				color: #9598a1;
-			}
-			
-			.results-panel {
-				background: #1a1e27;
-				border-radius: 8px;
-				padding: 15px;
-				max-height: 200px;
-				overflow-y: auto;
-				border: 1px solid #2a2e39;
-			}
-			
-			.pattern-result {
-				background: #2a2e39;
-				border-radius: 6px;
-				padding: 12px;
-				margin: 8px 0;
-				border-left: 3px solid;
-			}
-			
-			.pattern-result.gartley { border-left-color: #2196F3; }
-			.pattern-result.butterfly { border-left-color: #FF9800; }
-			.pattern-result.bat { border-left-color: #9C27B0; }
-			.pattern-result.crab { border-left-color: #F44336; }
-			.pattern-result.shark { border-left-color: #607D8B; }
-			
-			.result-header {
-				font-weight: 600;
-				margin-bottom: 6px;
-				font-size: 13px;
-			}
-			
-			.result-details {
-				color: #9598a1;
-				font-size: 11px;
-				line-height: 1.3;
-			}
-			
-			.footer-info {
-				margin-top: 20px;
-				padding: 12px;
-				background: #1a1e27;
-				border-radius: 6px;
-				font-size: 10px;
-				color: #666;
-				line-height: 1.4;
-				text-align: center;
-			}
-		</style>
 
-		<script type="text/javascript">
-			let widget;
-			let shapeIds = [];
-			let currentSymbol = 'EURUSD';
-			let currentTimeframe = '1H';
-			let isScanning = false;
-			let currentPatterns = [];
+<head>
+	<title>TradingView - Professional Harmonic Pattern Scanner</title>
 
-			// Professional Harmonic Pattern Detector
-			class HarmonicScanner {
-				constructor() {
-					this.patterns = {
-						gartley: {
-							name: 'Gartley',
-							color: '#2196F3',
-							icon: '🦋',
-							ratios: {
-								AB_XA: { target: 0.618, tolerance: 0.08 },
-								BC_AB: { min: 0.382, max: 0.886, tolerance: 0.1 },
-								CD_BC: { min: 1.13, max: 1.618, tolerance: 0.15 },
-								AD_XA: { target: 0.786, tolerance: 0.08 }
-							}
-						},
-						butterfly: {
-							name: 'Butterfly',
-							color: '#FF9800',
-							icon: '🦋',
-							ratios: {
-								AB_XA: { target: 0.786, tolerance: 0.08 },
-								BC_AB: { min: 0.382, max: 0.886, tolerance: 0.1 },
-								CD_BC: { min: 1.618, max: 2.618, tolerance: 0.2 },
-								AD_XA: { min: 1.27, max: 1.618, tolerance: 0.15 }
-							}
-						},
-						bat: {
-							name: 'Bat',
-							color: '#9C27B0',
-							icon: '🦇',
-							ratios: {
-								AB_XA: { min: 0.382, max: 0.5, tolerance: 0.08 },
-								BC_AB: { min: 0.382, max: 0.886, tolerance: 0.1 },
-								CD_BC: { min: 1.618, max: 2.618, tolerance: 0.2 },
-								AD_XA: { target: 0.886, tolerance: 0.08 }
-							}
-						},
-						crab: {
-							name: 'Crab',
-							color: '#F44336',
-							icon: '🦀',
-							ratios: {
-								AB_XA: { min: 0.382, max: 0.618, tolerance: 0.1 },
-								BC_AB: { min: 0.382, max: 0.886, tolerance: 0.1 },
-								CD_BC: { min: 2.24, max: 3.618, tolerance: 0.3 },
-								AD_XA: { target: 1.618, tolerance: 0.15 }
-							}
-						},
-						shark: {
-							name: 'Shark',
-							color: '#607D8B',
-							icon: '🦈',
-							ratios: {
-								AB_XA: { min: 0.382, max: 0.618, tolerance: 0.1 },
-								BC_AB: { min: 1.13, max: 1.618, tolerance: 0.15 },
-								CD_BC: { min: 1.618, max: 2.24, tolerance: 0.2 },
-								AD_XA: { min: 0.886, max: 1.13, tolerance: 0.12 }
-							}
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+
+	<script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
+	<script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
+
+	<style>
+		body {
+			margin: 0px;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			background: #131722;
+			color: #d1d4dc;
+		}
+
+		.scanner-controls {
+			position: fixed;
+			top: 15px;
+			right: 15px;
+			background: rgba(19, 23, 34, 0.98);
+			border: 1px solid #2a2e39;
+			border-radius: 12px;
+			padding: 20px;
+			z-index: 1000;
+			width: 340px;
+			max-height: 85vh;
+			overflow-y: auto;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+		}
+
+		.scanner-title {
+			text-align: center;
+			margin: 0 0 20px 0;
+			font-size: 18px;
+			font-weight: 600;
+			color: #4CAF50;
+			border-bottom: 2px solid #2a2e39;
+			padding-bottom: 15px;
+		}
+
+		.instrument-section {
+			background: #1a1e27;
+			border-radius: 8px;
+			padding: 15px;
+			margin-bottom: 20px;
+			border: 1px solid #2a2e39;
+		}
+
+		.section-title {
+			font-size: 14px;
+			font-weight: 600;
+			color: #d1d4dc;
+			margin-bottom: 12px;
+		}
+
+		.symbol-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 6px;
+			margin-bottom: 12px;
+		}
+
+		.symbol-btn {
+			padding: 8px 6px;
+			background: #2a2e39;
+			color: #d1d4dc;
+			border: 1px solid #434651;
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 11px;
+			text-align: center;
+			transition: all 0.2s ease;
+		}
+
+		.symbol-btn:hover {
+			background: #363a45;
+			border-color: #4CAF50;
+		}
+
+		.symbol-btn.active {
+			background: #4CAF50;
+			color: white;
+			border-color: #4CAF50;
+		}
+
+		.timeframe-selector {
+			width: 100%;
+			padding: 10px;
+			background: #2a2e39;
+			color: white;
+			border: 1px solid #434651;
+			border-radius: 6px;
+			font-size: 13px;
+		}
+
+		.pattern-section {
+			background: #1a1e27;
+			border-radius: 8px;
+			padding: 15px;
+			margin-bottom: 20px;
+			border: 1px solid #2a2e39;
+		}
+
+		.pattern-btn {
+			display: block;
+			width: 100%;
+			margin: 8px 0;
+			padding: 14px;
+			background: #2a2e39;
+			color: white;
+			border: 1px solid #434651;
+			border-radius: 8px;
+			cursor: pointer;
+			font-size: 14px;
+			position: relative;
+			transition: all 0.2s ease;
+		}
+
+		.pattern-btn:hover {
+			background: #363a45;
+			transform: translateY(-1px);
+		}
+
+		.pattern-btn.active {
+			background: linear-gradient(135deg, #1976d2, #2196F3);
+			border-color: #1976d2;
+		}
+
+		.pattern-btn.scanning {
+			background: linear-gradient(135deg, #ff9800, #ffc107);
+			animation: scanPulse 1.5s infinite;
+		}
+
+		@keyframes scanPulse {
+
+			0%,
+			100% {
+				opacity: 1;
+			}
+
+			50% {
+				opacity: 0.8;
+			}
+		}
+
+		.pattern-count {
+			position: absolute;
+			right: 12px;
+			top: 50%;
+			transform: translateY(-50%);
+			background: #4CAF50;
+			color: white;
+			padding: 3px 8px;
+			border-radius: 12px;
+			font-size: 10px;
+			font-weight: bold;
+			display: none;
+		}
+
+		.clear-btn {
+			background: linear-gradient(135deg, #f44336, #e53935) !important;
+			border-color: #f44336 !important;
+		}
+
+		.status-panel {
+			background: #2a2e39;
+			border-radius: 8px;
+			padding: 12px;
+			margin-bottom: 20px;
+			border-left: 4px solid #4CAF50;
+		}
+
+		.status-text {
+			font-size: 12px;
+			line-height: 1.4;
+		}
+
+		.chart-info {
+			background: #1a1e27;
+			border-radius: 6px;
+			padding: 10px;
+			margin-bottom: 15px;
+			font-size: 11px;
+			color: #9598a1;
+		}
+
+		.results-panel {
+			background: #1a1e27;
+			border-radius: 8px;
+			padding: 15px;
+			max-height: 200px;
+			overflow-y: auto;
+			border: 1px solid #2a2e39;
+		}
+
+		.pattern-result {
+			background: #2a2e39;
+			border-radius: 6px;
+			padding: 12px;
+			margin: 8px 0;
+			border-left: 3px solid;
+		}
+
+		.pattern-result.gartley {
+			border-left-color: #2196F3;
+		}
+
+		.pattern-result.butterfly {
+			border-left-color: #FF9800;
+		}
+
+		.pattern-result.bat {
+			border-left-color: #9C27B0;
+		}
+
+		.pattern-result.crab {
+			border-left-color: #F44336;
+		}
+
+		.pattern-result.shark {
+			border-left-color: #607D8B;
+		}
+
+		.result-header {
+			font-weight: 600;
+			margin-bottom: 6px;
+			font-size: 13px;
+		}
+
+		.result-details {
+			color: #9598a1;
+			font-size: 11px;
+			line-height: 1.3;
+		}
+
+		.footer-info {
+			margin-top: 20px;
+			padding: 12px;
+			background: #1a1e27;
+			border-radius: 6px;
+			font-size: 10px;
+			color: #666;
+			line-height: 1.4;
+			text-align: center;
+		}
+	</style>
+
+	<script type="text/javascript">
+		let widget;
+		let shapeIds = [];
+		let currentSymbol = 'EURUSD';
+		let currentTimeframe = '1H';
+		let isScanning = false;
+		let currentPatterns = [];
+
+		// Professional Harmonic Pattern Detector
+		class HarmonicScanner {
+			constructor() {
+				this.patterns = {
+					gartley: {
+						name: 'Gartley',
+						color: '#2196F3',
+						icon: '🦋',
+						ratios: {
+							AB_XA: { target: 0.618, tolerance: 0.08 },
+							BC_AB: { min: 0.382, max: 0.886, tolerance: 0.1 },
+							CD_BC: { min: 1.13, max: 1.618, tolerance: 0.15 },
+							AD_XA: { target: 0.786, tolerance: 0.08 }
 						}
-					};
-				}
-
-				// Generate realistic market data for any symbol
-				generateMarketData(symbol, timeframe, bars = 250) {
-					const data = [];
-					const now = Date.now();
-					const timeframeMins = this.getTimeframeMinutes(timeframe);
-					
-					let basePrice = this.getSymbolBasePrice(symbol);
-					let volatility = this.getSymbolVolatility(symbol);
-					let currentPrice = basePrice;
-					
-					for (let i = bars; i >= 0; i--) {
-						const time = now - (i * timeframeMins * 60 * 1000);
-						
-						// Enhanced price movement simulation
-						const trendComponent = Math.sin(i / 40) * 0.003;
-						const volatilityComponent = (Math.random() - 0.5) * volatility;
-						const momentumComponent = (Math.random() - 0.5) * volatility * 0.3;
-						
-						const totalChange = (trendComponent + volatilityComponent + momentumComponent) * currentPrice;
-						
-						const open = currentPrice;
-						const close = currentPrice + totalChange;
-						
-						// Realistic wick generation
-						const wickRange = Math.abs(totalChange) * (0.3 + Math.random() * 0.7);
-						const high = Math.max(open, close) + wickRange * Math.random();
-						const low = Math.min(open, close) - wickRange * Math.random();
-						
-						data.push({
-							time: Math.floor(time / 1000),
-							open: this.roundToTickSize(open, symbol),
-							high: this.roundToTickSize(high, symbol),
-							low: this.roundToTickSize(low, symbol),
-							close: this.roundToTickSize(close, symbol),
-							volume: Math.floor(Math.random() * 5000000) + 500000
-						});
-						
-						currentPrice = close;
-					}
-					
-					return data.sort((a, b) => a.time - b.time);
-				}
-
-				getTimeframeMinutes(tf) {
-					const map = { '1': 1, '5': 5, '15': 15, '30': 30, '1H': 60, '4H': 240, '1D': 1440, '1W': 10080 };
-					return map[tf] || 60;
-				}
-
-				getSymbolBasePrice(symbol) {
-					const prices = {
-						'EURUSD': 1.0850, 'GBPUSD': 1.2650, 'USDJPY': 149.50, 'USDCHF': 0.8750,
-						'AUDUSD': 0.6750, 'USDCAD': 1.3550, 'BTCUSD': 43000, 'ETHUSD': 2600,
-						'AAPL': 195, 'GOOGL': 2850, 'MSFT': 415, 'TSLA': 245, 'GOLD': 2010, 'OIL': 78
-					};
-					return prices[symbol] || 100;
-				}
-
-				getSymbolVolatility(symbol) {
-					if (symbol.includes('BTC') || symbol.includes('ETH')) return 0.025;
-					if (symbol.length === 6 && symbol.includes('USD')) return 0.006;
-					if (symbol.includes('JPY')) return 0.008;
-					return 0.012;
-				}
-
-				roundToTickSize(price, symbol) {
-					if (symbol.includes('JPY')) return Math.round(price * 1000) / 1000;
-					if (symbol.length === 6) return Math.round(price * 100000) / 100000;
-					if (symbol.includes('BTC')) return Math.round(price * 100) / 100;
-					return Math.round(price * 100) / 100;
-				}
-
-				// Detect swing points from price data
-				findSwingPoints(data, lookback = 5) {
-					const swings = [];
-					
-					for (let i = lookback; i < data.length - lookback; i++) {
-						const current = data[i];
-						let isHigh = true, isLow = true;
-						
-						for (let j = i - lookback; j <= i + lookback; j++) {
-							if (j !== i) {
-								if (data[j].high >= current.high) isHigh = false;
-								if (data[j].low <= current.low) isLow = false;
-							}
+					},
+					butterfly: {
+						name: 'Butterfly',
+						color: '#FF9800',
+						icon: '🦋',
+						ratios: {
+							AB_XA: { target: 0.786, tolerance: 0.08 },
+							BC_AB: { min: 0.382, max: 0.886, tolerance: 0.1 },
+							CD_BC: { min: 1.618, max: 2.618, tolerance: 0.2 },
+							AD_XA: { min: 1.27, max: 1.618, tolerance: 0.15 }
 						}
-						
-						if (isHigh && !isLow) {
-							swings.push({ index: i, time: current.time, price: current.high, type: 'high' });
-						} else if (isLow && !isHigh) {
-							swings.push({ index: i, time: current.time, price: current.low, type: 'low' });
+					},
+					bat: {
+						name: 'Bat',
+						color: '#9C27B0',
+						icon: '🦇',
+						ratios: {
+							AB_XA: { min: 0.382, max: 0.5, tolerance: 0.08 },
+							BC_AB: { min: 0.382, max: 0.886, tolerance: 0.1 },
+							CD_BC: { min: 1.618, max: 2.618, tolerance: 0.2 },
+							AD_XA: { target: 0.886, tolerance: 0.08 }
+						}
+					},
+					crab: {
+						name: 'Crab',
+						color: '#F44336',
+						icon: '🦀',
+						ratios: {
+							AB_XA: { min: 0.382, max: 0.618, tolerance: 0.1 },
+							BC_AB: { min: 0.382, max: 0.886, tolerance: 0.1 },
+							CD_BC: { min: 2.24, max: 3.618, tolerance: 0.3 },
+							AD_XA: { target: 1.618, tolerance: 0.15 }
+						}
+					},
+					shark: {
+						name: 'Shark',
+						color: '#607D8B',
+						icon: '🦈',
+						ratios: {
+							AB_XA: { min: 0.382, max: 0.618, tolerance: 0.1 },
+							BC_AB: { min: 1.13, max: 1.618, tolerance: 0.15 },
+							CD_BC: { min: 1.618, max: 2.24, tolerance: 0.2 },
+							AD_XA: { min: 0.886, max: 1.13, tolerance: 0.12 }
 						}
 					}
-					
-					return swings;
+				};
+			}
+
+			// Generate realistic market data for any symbol
+			generateMarketData(symbol, timeframe, bars = 250) {
+				const data = [];
+				const now = Date.now();
+				const timeframeMins = this.getTimeframeMinutes(timeframe);
+
+				let basePrice = this.getSymbolBasePrice(symbol);
+				let volatility = this.getSymbolVolatility(symbol);
+				let currentPrice = basePrice;
+
+				for (let i = bars; i >= 0; i--) {
+					const time = now - (i * timeframeMins * 60 * 1000);
+
+					// Enhanced price movement simulation
+					const trendComponent = Math.sin(i / 40) * 0.003;
+					const volatilityComponent = (Math.random() - 0.5) * volatility;
+					const momentumComponent = (Math.random() - 0.5) * volatility * 0.3;
+
+					const totalChange = (trendComponent + volatilityComponent + momentumComponent) * currentPrice;
+
+					const open = currentPrice;
+					const close = currentPrice + totalChange;
+
+					// Realistic wick generation
+					const wickRange = Math.abs(totalChange) * (0.3 + Math.random() * 0.7);
+					const high = Math.max(open, close) + wickRange * Math.random();
+					const low = Math.min(open, close) - wickRange * Math.random();
+
+					data.push({
+						time: Math.floor(time / 1000),
+						open: this.roundToTickSize(open, symbol),
+						high: this.roundToTickSize(high, symbol),
+						low: this.roundToTickSize(low, symbol),
+						close: this.roundToTickSize(close, symbol),
+						volume: Math.floor(Math.random() * 5000000) + 500000
+					});
+
+					currentPrice = close;
 				}
 
-				// Calculate Fibonacci ratio between price points
-				calculateRatio(priceA, priceB, priceC) {
-					const moveAB = Math.abs(priceB - priceA);
-					const moveBC = Math.abs(priceC - priceB);
-					return moveAB === 0 ? 0 : moveBC / moveAB;
-				}
+				return data.sort((a, b) => a.time - b.time);
+			}
 
-				// Validate if points form the specified harmonic pattern
-				validateHarmonicPattern(points, patternType) {
-					const pattern = this.patterns[patternType];
-					if (!pattern || points.length !== 5) return { valid: false, confidence: 0 };
+			getTimeframeMinutes(tf) {
+				const map = { '1': 1, '5': 5, '15': 15, '30': 30, '1H': 60, '4H': 240, '1D': 1440, '1W': 10080 };
+				return map[tf] || 60;
+			}
 
-					const [X, A, B, C, D] = points;
-					
-					const ratios = {
-						AB_XA: this.calculateRatio(X.price, A.price, B.price),
-						BC_AB: this.calculateRatio(A.price, B.price, C.price),
-						CD_BC: this.calculateRatio(B.price, C.price, D.price),
-						AD_XA: this.calculateRatio(X.price, A.price, D.price)
-					};
+			getSymbolBasePrice(symbol) {
+				const prices = {
+					'EURUSD': 1.0850, 'GBPUSD': 1.2650, 'USDJPY': 149.50, 'USDCHF': 0.8750,
+					'AUDUSD': 0.6750, 'USDCAD': 1.3550, 'BTCUSD': 43000, 'ETHUSD': 2600,
+					'AAPL': 195, 'GOOGL': 2850, 'MSFT': 415, 'TSLA': 245, 'GOLD': 2010, 'OIL': 78
+				};
+				return prices[symbol] || 100;
+			}
 
-					let totalScore = 0;
-					let checkedRatios = 0;
+			getSymbolVolatility(symbol) {
+				if (symbol.includes('BTC') || symbol.includes('ETH')) return 0.025;
+				if (symbol.length === 6 && symbol.includes('USD')) return 0.006;
+				if (symbol.includes('JPY')) return 0.008;
+				return 0.012;
+			}
 
-					// Score each ratio against pattern requirements
-					for (const [ratioName, actualRatio] of Object.entries(ratios)) {
-						const requirement = pattern.ratios[ratioName];
-						if (!requirement) continue;
-						
-						checkedRatios++;
-						let score = 0;
+			roundToTickSize(price, symbol) {
+				if (symbol.includes('JPY')) return Math.round(price * 1000) / 1000;
+				if (symbol.length === 6) return Math.round(price * 100000) / 100000;
+				if (symbol.includes('BTC')) return Math.round(price * 100) / 100;
+				return Math.round(price * 100) / 100;
+			}
 
-						if (requirement.target !== undefined) {
-							// Single target value
-							const diff = Math.abs(actualRatio - requirement.target);
-							if (diff <= requirement.tolerance) score = 1;
-							else if (diff <= requirement.tolerance * 2) score = 0.5;
-						} else if (requirement.min !== undefined && requirement.max !== undefined) {
-							// Range validation
-							if (actualRatio >= requirement.min - requirement.tolerance && 
-								actualRatio <= requirement.max + requirement.tolerance) {
-								score = 1;
-							}
-						}
+			// Detect swing points from price data
+			findSwingPoints(data, lookback = 5) {
+				const swings = [];
 
-						totalScore += score;
-					}
+				for (let i = lookback; i < data.length - lookback; i++) {
+					const current = data[i];
+					let isHigh = true, isLow = true;
 
-					const confidence = checkedRatios > 0 ? (totalScore / checkedRatios) * 100 : 0;
-					
-					return {
-						valid: confidence >= 60,
-						confidence,
-						ratios,
-						totalScore,
-						checkedRatios
-					};
-				}
-
-				// Check if swing sequence is valid for harmonic patterns
-				isValidSwingSequence(points) {
-					if (points.length !== 5) return false;
-					
-					// Must be chronological
-					for (let i = 1; i < points.length; i++) {
-						if (points[i].time <= points[i-1].time) return false;
-					}
-					
-					// Must alternate between highs and lows
-					const types = points.map(p => p.type);
-					const validPatterns = [
-						['high', 'low', 'high', 'low', 'high'],
-						['low', 'high', 'low', 'high', 'low']
-					];
-					
-					return validPatterns.some(pattern => 
-						JSON.stringify(types) === JSON.stringify(pattern)
-					);
-				}
-
-				// Main pattern detection method
-				async detectPatterns(symbol, timeframe, patternType) {
-					const marketData = this.generateMarketData(symbol, timeframe);
-					const swingPoints = this.findSwingPoints(marketData);
-					const patterns = [];
-
-					console.log(`Scanning ${symbol} ${timeframe} for ${patternType} patterns...`);
-					console.log(`Found ${swingPoints.length} swing points in ${marketData.length} bars`);
-
-					if (swingPoints.length < 5) return patterns;
-
-					// Test all possible 5-point combinations
-					for (let i = 0; i <= swingPoints.length - 5; i++) {
-						const candidatePoints = swingPoints.slice(i, i + 5);
-						
-						if (this.isValidSwingSequence(candidatePoints)) {
-							const validation = this.validateHarmonicPattern(candidatePoints, patternType);
-							
-							if (validation.valid) {
-								const patternInfo = this.patterns[patternType];
-								patterns.push({
-									type: patternType,
-									name: patternInfo.name,
-									symbol: symbol,
-									timeframe: timeframe,
-									points: candidatePoints,
-									color: patternInfo.color,
-									icon: patternInfo.icon,
-									confidence: validation.confidence,
-									ratios: validation.ratios,
-									direction: candidatePoints[0].type === 'high' ? 'bearish' : 'bullish',
-									timestamp: Date.now()
-								});
-							}
+					for (let j = i - lookback; j <= i + lookback; j++) {
+						if (j !== i) {
+							if (data[j].high >= current.high) isHigh = false;
+							if (data[j].low <= current.low) isLow = false;
 						}
 					}
 
-					return patterns.sort((a, b) => b.confidence - a.confidence);
+					if (isHigh && !isLow) {
+						swings.push({ index: i, time: current.time, price: current.high, type: 'high' });
+					} else if (isLow && !isHigh) {
+						swings.push({ index: i, time: current.time, price: current.low, type: 'low' });
+					}
 				}
+
+				return swings;
 			}
 
-			// Scanner instance
-			const scanner = new HarmonicScanner();
-
-			// UI Functions
-			function updateStatus(message) {
-				const statusEl = document.querySelector('.status-text');
-				if (statusEl) {
-					statusEl.innerHTML = `<strong>Status:</strong> ${message}`;
-				}
-				console.log('Scanner Status:', message);
+			// Calculate Fibonacci ratio between price points
+			calculateRatio(priceA, priceB, priceC) {
+				const moveAB = Math.abs(priceB - priceA);
+				const moveBC = Math.abs(priceC - priceB);
+				return moveAB === 0 ? 0 : moveBC / moveAB;
 			}
 
-			function updateChartInfo(symbol, timeframe) {
-				const infoEl = document.querySelector('.chart-info');
-				if (infoEl) {
-					infoEl.innerHTML = `
+			// Validate if points form the specified harmonic pattern
+			validateHarmonicPattern(points, patternType) {
+				const pattern = this.patterns[patternType];
+				if (!pattern || points.length !== 5) return { valid: false, confidence: 0 };
+
+				const [X, A, B, C, D] = points;
+
+				const ratios = {
+					AB_XA: this.calculateRatio(X.price, A.price, B.price),
+					BC_AB: this.calculateRatio(A.price, B.price, C.price),
+					CD_BC: this.calculateRatio(B.price, C.price, D.price),
+					AD_XA: this.calculateRatio(X.price, A.price, D.price)
+				};
+
+				let totalScore = 0;
+				let checkedRatios = 0;
+
+				// Score each ratio against pattern requirements
+				for (const [ratioName, actualRatio] of Object.entries(ratios)) {
+					const requirement = pattern.ratios[ratioName];
+					if (!requirement) continue;
+
+					checkedRatios++;
+					let score = 0;
+
+					if (requirement.target !== undefined) {
+						// Single target value
+						const diff = Math.abs(actualRatio - requirement.target);
+						if (diff <= requirement.tolerance) score = 1;
+						else if (diff <= requirement.tolerance * 2) score = 0.5;
+					} else if (requirement.min !== undefined && requirement.max !== undefined) {
+						// Range validation
+						if (actualRatio >= requirement.min - requirement.tolerance &&
+							actualRatio <= requirement.max + requirement.tolerance) {
+							score = 1;
+						}
+					}
+
+					totalScore += score;
+				}
+
+				const confidence = checkedRatios > 0 ? (totalScore / checkedRatios) * 100 : 0;
+
+				return {
+					valid: confidence >= 60,
+					confidence,
+					ratios,
+					totalScore,
+					checkedRatios
+				};
+			}
+
+			// Check if swing sequence is valid for harmonic patterns
+			isValidSwingSequence(points) {
+				if (points.length !== 5) return false;
+
+				// Must be chronological
+				for (let i = 1; i < points.length; i++) {
+					if (points[i].time <= points[i - 1].time) return false;
+				}
+
+				// Must alternate between highs and lows
+				const types = points.map(p => p.type);
+				const validPatterns = [
+					['high', 'low', 'high', 'low', 'high'],
+					['low', 'high', 'low', 'high', 'low']
+				];
+
+				return validPatterns.some(pattern =>
+					JSON.stringify(types) === JSON.stringify(pattern)
+				);
+			}
+
+			// Main pattern detection method
+			async detectPatterns(symbol, timeframe, patternType) {
+				const marketData = this.generateMarketData(symbol, timeframe);
+				const swingPoints = this.findSwingPoints(marketData);
+				const patterns = [];
+
+				console.log(`Scanning ${symbol} ${timeframe} for ${patternType} patterns...`);
+				console.log(`Found ${swingPoints.length} swing points in ${marketData.length} bars`);
+
+				if (swingPoints.length < 5) return patterns;
+
+				// Test all possible 5-point combinations
+				for (let i = 0; i <= swingPoints.length - 5; i++) {
+					const candidatePoints = swingPoints.slice(i, i + 5);
+
+					if (this.isValidSwingSequence(candidatePoints)) {
+						const validation = this.validateHarmonicPattern(candidatePoints, patternType);
+
+						if (validation.valid) {
+							const patternInfo = this.patterns[patternType];
+							patterns.push({
+								type: patternType,
+								name: patternInfo.name,
+								symbol: symbol,
+								timeframe: timeframe,
+								points: candidatePoints,
+								color: patternInfo.color,
+								icon: patternInfo.icon,
+								confidence: validation.confidence,
+								ratios: validation.ratios,
+								direction: candidatePoints[0].type === 'high' ? 'bearish' : 'bullish',
+								timestamp: Date.now()
+							});
+						}
+					}
+				}
+
+				return patterns.sort((a, b) => b.confidence - a.confidence);
+			}
+		}
+
+		// Scanner instance
+		const scanner = new HarmonicScanner();
+
+		// UI Functions
+		function updateStatus(message) {
+			const statusEl = document.querySelector('.status-text');
+			if (statusEl) {
+				statusEl.innerHTML = `<strong>Status:</strong> ${message}`;
+			}
+			console.log('Scanner Status:', message);
+		}
+
+		function updateChartInfo(symbol, timeframe) {
+			const infoEl = document.querySelector('.chart-info');
+			if (infoEl) {
+				infoEl.innerHTML = `
 						📊 <strong>Active Instrument:</strong> ${symbol}<br>
 						⏱️ <strong>Timeframe:</strong> ${timeframe}<br>
 						🕐 <strong>Last Scan:</strong> ${new Date().toLocaleTimeString()}
 					`;
-				}
 			}
+		}
 
-			function selectSymbol(symbol) {
-				if (symbol === currentSymbol) return;
-				
-				currentSymbol = symbol;
-				updateStatus(`Loading ${symbol}...`);
-				
-				// Update UI
-				document.querySelectorAll('.symbol-btn').forEach(btn => {
-					btn.classList.remove('active');
-					if (btn.textContent === symbol) btn.classList.add('active');
+		function selectSymbol(symbol) {
+			if (symbol === currentSymbol) return;
+
+			currentSymbol = symbol;
+			updateStatus(`Loading ${symbol}...`);
+
+			// Update UI
+			document.querySelectorAll('.symbol-btn').forEach(btn => {
+				btn.classList.remove('active');
+				if (btn.textContent === symbol) btn.classList.add('active');
+			});
+
+			// Update chart
+			if (widget && widget.chart()) {
+				widget.chart().setSymbol(symbol, () => {
+					updateStatus(`Chart loaded: ${symbol}`);
+					updateChartInfo(symbol, currentTimeframe);
 				});
-				
-				// Update chart
-				if (widget && widget.chart()) {
-					widget.chart().setSymbol(symbol, () => {
-						updateStatus(`Chart loaded: ${symbol}`);
-						updateChartInfo(symbol, currentTimeframe);
-					});
-				}
-				
-				clearAllPatterns();
 			}
 
-			function selectTimeframe(timeframe) {
-				if (timeframe === currentTimeframe) return;
-				
-				currentTimeframe = timeframe;
-				updateStatus(`Switching to ${timeframe}...`);
-				
-				if (widget && widget.chart()) {
-					widget.chart().setResolution(timeframe, () => {
-						updateStatus(`Timeframe: ${timeframe}`);
-						updateChartInfo(currentSymbol, timeframe);
-					});
-				}
-				
-				clearAllPatterns();
+			clearAllPatterns();
+		}
+
+		function selectTimeframe(timeframe) {
+			if (timeframe === currentTimeframe) return;
+
+			currentTimeframe = timeframe;
+			updateStatus(`Switching to ${timeframe}...`);
+
+			if (widget && widget.chart()) {
+				widget.chart().setResolution(timeframe, () => {
+					updateStatus(`Timeframe: ${timeframe}`);
+					updateChartInfo(currentSymbol, timeframe);
+				});
 			}
 
-			async function scanForPatterns(patternType) {
-				if (isScanning) {
-					updateStatus('Scanner is busy, please wait...');
-					return;
-				}
-				
-				isScanning = true;
-				const button = document.querySelector(`[data-pattern="${patternType}"]`);
-				if (button) button.classList.add('scanning');
-				
-				try {
-					updateStatus(`Analyzing ${currentSymbol} for ${patternType} patterns...`);
-					
-					const patterns = await scanner.detectPatterns(currentSymbol, currentTimeframe, patternType);
-					
-					updateStatus(`Found ${patterns.length} ${patternType} patterns`);
-					
-					// Clear old patterns and draw new ones
-					clearPatternType(patternType);
-					patterns.slice(0, 3).forEach(pattern => drawPatternOnChart(pattern));
-					
-					// Update UI
-					updatePatternCount(patternType, patterns.length);
-					displayPatternResults(patterns);
-					
-					currentPatterns = currentPatterns.filter(p => p.type !== patternType);
-					currentPatterns.push(...patterns);
-					
-				} catch (error) {
-					console.error('Pattern scanning error:', error);
-					updateStatus(`Scan error: ${error.message}`);
-				} finally {
-					isScanning = false;
-					if (button) button.classList.remove('scanning');
-				}
+			clearAllPatterns();
+		}
+
+		async function scanForPatterns(patternType) {
+			if (isScanning) {
+				updateStatus('Scanner is busy, please wait...');
+				return;
 			}
 
-			function drawPatternOnChart(pattern) {
-				if (!widget || !widget.chart()) return;
+			isScanning = true;
+			const button = document.querySelector(`[data-pattern="${patternType}"]`);
+			if (button) button.classList.add('scanning');
 
-				const chart = widget.chart();
-				const points = pattern.points;
-				
-				console.log(`Drawing ${pattern.name} pattern:`, points);
-				
-				try {
-					// Draw connecting lines
-					for (let i = 0; i < points.length - 1; i++) {
-						chart.createMultipointShape([
-							{ time: points[i].time, price: points[i].price },
-							{ time: points[i + 1].time, price: points[i + 1].price }
-						], {
-							shape: "trend_line",
-							overrides: {
-								linecolor: pattern.color,
-								linewidth: 2,
-								linestyle: 0,
-								transparency: 0
-							},
-							zOrder: "top"
-						}).then(id => {
-							if (id) shapeIds.push(id);
-						}).catch(err => console.log('Line draw error:', err));
-					}
+			try {
+				updateStatus(`Analyzing ${currentSymbol} for ${patternType} patterns...`);
 
-					// Add point labels
-					const labels = ['X', 'A', 'B', 'C', 'D'];
-					points.forEach((point, index) => {
-						chart.createMultipointShape([{ time: point.time, price: point.price }], {
-							shape: "text",
-							text: labels[index],
-							overrides: {
-								color: "#FFFFFF",
-								fontsize: 12,
-								bold: true,
-								backgroundColor: pattern.color,
-								backgroundTransparency: 0
-							},
-							zOrder: "top"
-						}).then(id => {
-							if (id) shapeIds.push(id);
-						}).catch(err => console.log('Label error:', err));
-					});
+				const patterns = await scanner.detectPatterns(currentSymbol, currentTimeframe, patternType);
 
-					// Pattern title
-					const direction = pattern.direction === 'bullish' ? '🟢' : '🔴';
-					chart.createMultipointShape([{ 
-						time: points[4].time, 
-						price: points[4].price 
-					}], {
-						shape: "text",
-						text: `${pattern.icon} ${pattern.name} ${direction} (${pattern.confidence.toFixed(0)}%)`,
+				updateStatus(`Found ${patterns.length} ${patternType} patterns`);
+
+				// Clear old patterns and draw new ones
+				clearPatternType(patternType);
+				patterns.slice(0, 3).forEach(pattern => drawPatternOnChart(pattern));
+
+				// Update UI
+				updatePatternCount(patternType, patterns.length);
+				displayPatternResults(patterns);
+
+				currentPatterns = currentPatterns.filter(p => p.type !== patternType);
+				currentPatterns.push(...patterns);
+
+			} catch (error) {
+				console.error('Pattern scanning error:', error);
+				updateStatus(`Scan error: ${error.message}`);
+			} finally {
+				isScanning = false;
+				if (button) button.classList.remove('scanning');
+			}
+		}
+
+		function drawPatternOnChart(pattern) {
+			if (!widget || !widget.chart()) return;
+
+			const chart = widget.chart();
+			const points = pattern.points;
+
+			console.log(`Drawing ${pattern.name} pattern:`, points);
+
+			try {
+				// Draw connecting lines
+				for (let i = 0; i < points.length - 1; i++) {
+					chart.createMultipointShape([
+						{ time: points[i].time, price: points[i].price },
+						{ time: points[i + 1].time, price: points[i + 1].price }
+					], {
+						shape: "trend_line",
 						overrides: {
-							color: pattern.color,
-							fontsize: 11,
-							bold: true,
-							backgroundColor: "#131722",
-							backgroundTransparency: 30
+							linecolor: pattern.color,
+							linewidth: 2,
+							linestyle: 0,
+							transparency: 0
 						},
 						zOrder: "top"
 					}).then(id => {
 						if (id) shapeIds.push(id);
-					}).catch(err => console.log('Title error:', err));
+					}).catch(err => console.log('Line draw error:', err));
+				}
 
+				// Add point labels
+				const labels = ['X', 'A', 'B', 'C', 'D'];
+				points.forEach((point, index) => {
+					chart.createMultipointShape([{ time: point.time, price: point.price }], {
+						shape: "text",
+						text: labels[index],
+						overrides: {
+							color: "#FFFFFF",
+							fontsize: 12,
+							bold: true,
+							backgroundColor: pattern.color,
+							backgroundTransparency: 0
+						},
+						zOrder: "top"
+					}).then(id => {
+						if (id) shapeIds.push(id);
+					}).catch(err => console.log('Label error:', err));
+				});
+
+				// Pattern title
+				const direction = pattern.direction === 'bullish' ? '🟢' : '🔴';
+				chart.createMultipointShape([{
+					time: points[4].time,
+					price: points[4].price
+				}], {
+					shape: "text",
+					text: `${pattern.icon} ${pattern.name} ${direction} (${pattern.confidence.toFixed(0)}%)`,
+					overrides: {
+						color: pattern.color,
+						fontsize: 11,
+						bold: true,
+						backgroundColor: "#131722",
+						backgroundTransparency: 30
+					},
+					zOrder: "top"
+				}).then(id => {
+					if (id) shapeIds.push(id);
+				}).catch(err => console.log('Title error:', err));
+
+			} catch (error) {
+				console.error('Error drawing pattern:', error);
+			}
+		}
+
+		function updatePatternCount(patternType, count) {
+			const button = document.querySelector(`[data-pattern="${patternType}"]`);
+			if (button) {
+				const countEl = button.querySelector('.pattern-count');
+				if (countEl) {
+					countEl.textContent = count;
+					countEl.style.display = count > 0 ? 'block' : 'none';
+				}
+				button.classList.toggle('active', count > 0);
+			}
+		}
+
+		function clearPatternType(patternType) {
+			console.log(`Clearing ${patternType} patterns`);
+		}
+
+		function clearAllPatterns() {
+			if (widget && widget.chart()) {
+				try {
+					widget.chart().removeAllShapes();
+					shapeIds = [];
+					currentPatterns = [];
+					updateStatus('All patterns cleared');
+
+					document.querySelectorAll('.pattern-btn').forEach(btn => {
+						if (!btn.classList.contains('clear-btn')) {
+							btn.classList.remove('active');
+							const countEl = btn.querySelector('.pattern-count');
+							if (countEl) countEl.style.display = 'none';
+						}
+					});
+
+					displayPatternResults([]);
 				} catch (error) {
-					console.error('Error drawing pattern:', error);
+					console.error('Clear error:', error);
 				}
 			}
+		}
 
-			function updatePatternCount(patternType, count) {
-				const button = document.querySelector(`[data-pattern="${patternType}"]`);
-				if (button) {
-					const countEl = button.querySelector('.pattern-count');
-					if (countEl) {
-						countEl.textContent = count;
-						countEl.style.display = count > 0 ? 'block' : 'none';
-					}
-					button.classList.toggle('active', count > 0);
-				}
+		function displayPatternResults(patterns) {
+			const resultsEl = document.querySelector('.results-panel');
+			if (!resultsEl) return;
+
+			if (patterns.length === 0) {
+				resultsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No patterns detected</div>';
+				return;
 			}
 
-			function clearPatternType(patternType) {
-				console.log(`Clearing ${patternType} patterns`);
-			}
-
-			function clearAllPatterns() {
-				if (widget && widget.chart()) {
-					try {
-						widget.chart().removeAllShapes();
-						shapeIds = [];
-						currentPatterns = [];
-						updateStatus('All patterns cleared');
-						
-						document.querySelectorAll('.pattern-btn').forEach(btn => {
-							if (!btn.classList.contains('clear-btn')) {
-								btn.classList.remove('active');
-								const countEl = btn.querySelector('.pattern-count');
-								if (countEl) countEl.style.display = 'none';
-							}
-						});
-						
-						displayPatternResults([]);
-					} catch (error) {
-						console.error('Clear error:', error);
-					}
-				}
-			}
-
-			function displayPatternResults(patterns) {
-				const resultsEl = document.querySelector('.results-panel');
-				if (!resultsEl) return;
-				
-				if (patterns.length === 0) {
-					resultsEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No patterns detected</div>';
-					return;
-				}
-				
-				let html = '<div class="section-title">📊 Pattern Results</div>';
-				patterns.forEach(pattern => {
-					const direction = pattern.direction === 'bullish' ? '🟢 Bullish' : '🔴 Bearish';
-					html += `
+			let html = '<div class="section-title">📊 Pattern Results</div>';
+			patterns.forEach(pattern => {
+				const direction = pattern.direction === 'bullish' ? '🟢 Bullish' : '🔴 Bearish';
+				html += `
 						<div class="pattern-result ${pattern.type}">
 							<div class="result-header">
 								${pattern.icon} ${pattern.name} ${direction}
@@ -749,153 +771,154 @@
 							</div>
 						</div>
 					`;
-				});
-				
-				resultsEl.innerHTML = html;
-			}
+			});
 
-			// Initialize TradingView widget
-			function getParameterByName(name) {
-				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-					results = regex.exec(location.search);
-				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-			}
+			resultsEl.innerHTML = html;
+		}
 
-			function initOnReady() {
-				widget = window.tvWidget = new TradingView.widget({
-					debug: false,
-					fullscreen: true,
-					symbol: currentSymbol,
-					interval: currentTimeframe,
-					container: "tv_chart_container",
-					datafeed: new Datafeeds.UDFCompatibleDatafeed("https://demo-feed-data.tradingview.com"),
-					library_path: "charting_library/",
-					locale: "en",
-					disabled_features: ["use_localstorage_for_settings"],
-					enabled_features: ["study_templates"],
-					theme: 'dark',
-					overrides: {
-						"paneProperties.background": "#131722",
-						"mainSeriesProperties.candleStyle.upColor": "#4CAF50",
-						"mainSeriesProperties.candleStyle.downColor": "#F44336",
-						"mainSeriesProperties.candleStyle.wickUpColor": "#4CAF50",
-						"mainSeriesProperties.candleStyle.wickDownColor": "#F44336"
-					}
-				});
+		// Initialize TradingView widget
+		function getParameterByName(name) {
+			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(location.search);
+			return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}
 
-				widget.onChartReady(() => {
-					console.log('Professional Harmonic Scanner initialized');
-					updateStatus('Scanner ready - Select instrument and pattern to scan');
-					updateChartInfo(currentSymbol, currentTimeframe);
-					
-					// Set initial active symbol
-					document.querySelector('.symbol-btn').classList.add('active');
-				});
-			}
+		function initOnReady() {
+			widget = window.tvWidget = new TradingView.widget({
+				debug: false,
+				fullscreen: true,
+				symbol: currentSymbol,
+				interval: currentTimeframe,
+				container: "tv_chart_container",
+				datafeed: new Datafeeds.UDFCompatibleDatafeed("https://demo-feed-data.tradingview.com"),
+				library_path: "charting_library/",
+				locale: "en",
+				disabled_features: ["use_localstorage_for_settings"],
+				enabled_features: ["study_templates"],
+				theme: 'dark',
+				overrides: {
+					"paneProperties.background": "#131722",
+					"mainSeriesProperties.candleStyle.upColor": "#4CAF50",
+					"mainSeriesProperties.candleStyle.downColor": "#F44336",
+					"mainSeriesProperties.candleStyle.wickUpColor": "#4CAF50",
+					"mainSeriesProperties.candleStyle.wickDownColor": "#F44336"
+				}
+			});
 
-			window.addEventListener('DOMContentLoaded', initOnReady, false);
-		</script>
-	</head>
+			widget.onChartReady(() => {
+				console.log('Professional Harmonic Scanner initialized');
+				updateStatus('Scanner ready - Select instrument and pattern to scan');
+				updateChartInfo(currentSymbol, currentTimeframe);
 
-	<body>
-		<div id="tv_chart_container"></div>
-		
-		<div class="scanner-controls">
-			<h1 class="scanner-title">🎯 Professional Harmonic Scanner</h1>
-			
-			<div class="instrument-section">
-				<div class="section-title">📈 Trading Instruments</div>
-				
-				<div style="margin-bottom: 12px; font-size: 12px; color: #9598a1;">🏦 Forex Majors</div>
-				<div class="symbol-grid">
-					<button class="symbol-btn" onclick="selectSymbol('EURUSD')">EUR/USD</button>
-					<button class="symbol-btn" onclick="selectSymbol('GBPUSD')">GBP/USD</button>
-					<button class="symbol-btn" onclick="selectSymbol('USDJPY')">USD/JPY</button>
-					<button class="symbol-btn" onclick="selectSymbol('USDCHF')">USD/CHF</button>
-					<button class="symbol-btn" onclick="selectSymbol('AUDUSD')">AUD/USD</button>
-					<button class="symbol-btn" onclick="selectSymbol('USDCAD')">USD/CAD</button>
-				</div>
-				
-				<div style="margin: 12px 0 8px 0; font-size: 12px; color: #9598a1;">₿ Cryptocurrencies</div>
-				<div class="symbol-grid">
-					<button class="symbol-btn" onclick="selectSymbol('BTCUSD')">BTC/USD</button>
-					<button class="symbol-btn" onclick="selectSymbol('ETHUSD')">ETH/USD</button>
-					<button class="symbol-btn" onclick="selectSymbol('ADAUSD')">ADA/USD</button>
-				</div>
-				
-				<div style="margin: 12px 0 8px 0; font-size: 12px; color: #9598a1;">📊 Stocks & Commodities</div>
-				<div class="symbol-grid">
-					<button class="symbol-btn" onclick="selectSymbol('AAPL')">AAPL</button>
-					<button class="symbol-btn" onclick="selectSymbol('GOOGL')">GOOGL</button>
-					<button class="symbol-btn" onclick="selectSymbol('TSLA')">TSLA</button>
-					<button class="symbol-btn" onclick="selectSymbol('GOLD')">GOLD</button>
-					<button class="symbol-btn" onclick="selectSymbol('OIL')">OIL</button>
-					<button class="symbol-btn" onclick="selectSymbol('MSFT')">MSFT</button>
-				</div>
-				
-				<select class="timeframe-selector" onchange="selectTimeframe(this.value)">
-					<option value="15">15 Minutes</option>
-					<option value="30">30 Minutes</option>
-					<option value="1H" selected>1 Hour</option>
-					<option value="4H">4 Hours</option>
-					<option value="1D">1 Day</option>
-				</select>
+				// Set initial active symbol
+				document.querySelector('.symbol-btn').classList.add('active');
+			});
+		}
+
+		window.addEventListener('DOMContentLoaded', initOnReady, false);
+	</script>
+</head>
+
+<body>
+	<div id="tv_chart_container"></div>
+
+	<div class="scanner-controls">
+		<h1 class="scanner-title">🎯 Professional Harmonic Scanner</h1>
+
+		<div class="instrument-section">
+			<div class="section-title">📈 Trading Instruments</div>
+
+			<div style="margin-bottom: 12px; font-size: 12px; color: #9598a1;">🏦 Forex Majors</div>
+			<div class="symbol-grid">
+				<button class="symbol-btn" onclick="selectSymbol('EURUSD')">EUR/USD</button>
+				<button class="symbol-btn" onclick="selectSymbol('GBPUSD')">GBP/USD</button>
+				<button class="symbol-btn" onclick="selectSymbol('USDJPY')">USD/JPY</button>
+				<button class="symbol-btn" onclick="selectSymbol('USDCHF')">USD/CHF</button>
+				<button class="symbol-btn" onclick="selectSymbol('AUDUSD')">AUD/USD</button>
+				<button class="symbol-btn" onclick="selectSymbol('USDCAD')">USD/CAD</button>
 			</div>
-			
-			<div class="status-panel">
-				<div class="status-text"><strong>Status:</strong> Initializing scanner...</div>
+
+			<div style="margin: 12px 0 8px 0; font-size: 12px; color: #9598a1;">₿ Cryptocurrencies</div>
+			<div class="symbol-grid">
+				<button class="symbol-btn" onclick="selectSymbol('BTCUSD')">BTC/USD</button>
+				<button class="symbol-btn" onclick="selectSymbol('ETHUSD')">ETH/USD</button>
+				<button class="symbol-btn" onclick="selectSymbol('ADAUSD')">ADA/USD</button>
 			</div>
-			
-			<div class="chart-info">
-				📊 <strong>Chart loading...</strong>
+
+			<div style="margin: 12px 0 8px 0; font-size: 12px; color: #9598a1;">📊 Stocks & Commodities</div>
+			<div class="symbol-grid">
+				<button class="symbol-btn" onclick="selectSymbol('AAPL')">AAPL</button>
+				<button class="symbol-btn" onclick="selectSymbol('GOOGL')">GOOGL</button>
+				<button class="symbol-btn" onclick="selectSymbol('TSLA')">TSLA</button>
+				<button class="symbol-btn" onclick="selectSymbol('GOLD')">GOLD</button>
+				<button class="symbol-btn" onclick="selectSymbol('OIL')">OIL</button>
+				<button class="symbol-btn" onclick="selectSymbol('MSFT')">MSFT</button>
 			</div>
-			
-			<div class="pattern-section">
-				<div class="section-title">🔍 Harmonic Pattern Scanner</div>
-				
-				<button class="pattern-btn" data-pattern="gartley" onclick="scanForPatterns('gartley')">
-					🦋 Scan Gartley Patterns
-					<span class="pattern-count">0</span>
-				</button>
-				
-				<button class="pattern-btn" data-pattern="butterfly" onclick="scanForPatterns('butterfly')">
-					🦋 Scan Butterfly Patterns
-					<span class="pattern-count">0</span>
-				</button>
-				
-				<button class="pattern-btn" data-pattern="bat" onclick="scanForPatterns('bat')">
-					🦇 Scan Bat Patterns
-					<span class="pattern-count">0</span>
-				</button>
-				
-				<button class="pattern-btn" data-pattern="crab" onclick="scanForPatterns('crab')">
-					🦀 Scan Crab Patterns
-					<span class="pattern-count">0</span>
-				</button>
-				
-				<button class="pattern-btn" data-pattern="shark" onclick="scanForPatterns('shark')">
-					🦈 Scan Shark Patterns
-					<span class="pattern-count">0</span>
-				</button>
-				
-				<button class="pattern-btn clear-btn" onclick="clearAllPatterns()">
-					🗑️ Clear All Patterns
-				</button>
-			</div>
-			
-			<div class="results-panel">
-				<div style="text-align: center; color: #666; padding: 20px;">
-					Select an instrument and scan for patterns
-				</div>
-			</div>
-			
-			<div class="footer-info">
-				<strong>🎯 Professional Harmonic Scanner</strong><br>
-				Advanced pattern detection using Scott Carney methodology<br>
-				Fibonacci ratio validation with confidence scoring<br>
-				Multi-market support: Forex • Crypto • Stocks • Commodities
+
+			<select class="timeframe-selector" onchange="selectTimeframe(this.value)">
+				<option value="15">15 Minutes</option>
+				<option value="30">30 Minutes</option>
+				<option value="1H" selected>1 Hour</option>
+				<option value="4H">4 Hours</option>
+				<option value="1D">1 Day</option>
+			</select>
+		</div>
+
+		<div class="status-panel">
+			<div class="status-text"><strong>Status:</strong> Initializing scanner...</div>
+		</div>
+
+		<div class="chart-info">
+			📊 <strong>Chart loading...</strong>
+		</div>
+
+		<div class="pattern-section">
+			<div class="section-title">🔍 Harmonic Pattern Scanner</div>
+
+			<button class="pattern-btn" data-pattern="gartley" onclick="scanForPatterns('gartley')">
+				🦋 Scan Gartley Patterns
+				<span class="pattern-count">0</span>
+			</button>
+
+			<button class="pattern-btn" data-pattern="butterfly" onclick="scanForPatterns('butterfly')">
+				🦋 Scan Butterfly Patterns
+				<span class="pattern-count">0</span>
+			</button>
+
+			<button class="pattern-btn" data-pattern="bat" onclick="scanForPatterns('bat')">
+				🦇 Scan Bat Patterns
+				<span class="pattern-count">0</span>
+			</button>
+
+			<button class="pattern-btn" data-pattern="crab" onclick="scanForPatterns('crab')">
+				🦀 Scan Crab Patterns
+				<span class="pattern-count">0</span>
+			</button>
+
+			<button class="pattern-btn" data-pattern="shark" onclick="scanForPatterns('shark')">
+				🦈 Scan Shark Patterns
+				<span class="pattern-count">0</span>
+			</button>
+
+			<button class="pattern-btn clear-btn" onclick="clearAllPatterns()">
+				🗑️ Clear All Patterns
+			</button>
+		</div>
+
+		<div class="results-panel">
+			<div style="text-align: center; color: #666; padding: 20px;">
+				Select an instrument and scan for patterns
 			</div>
 		</div>
-	</body>
+
+		<div class="footer-info">
+			<strong>🎯 Professional Harmonic Scanner</strong><br>
+			Advanced pattern detection using Scott Carney methodology<br>
+			Fibonacci ratio validation with confidence scoring<br>
+			Multi-market support: Forex • Crypto • Stocks • Commodities
+		</div>
+	</div>
+</body>
+
 </html>

@@ -1,13 +1,14 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
     <title>Professional Harmonic Patterns Scanner - Market Ready</title>
-    
+
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
-    
+
     <script type="text/javascript" src="charting_library/charting_library.standalone.js"></script>
     <script type="text/javascript" src="datafeeds/udf/dist/bundle.js"></script>
-    
+
     <style>
         body {
             margin: 0;
@@ -17,7 +18,7 @@
             color: white;
             overflow: hidden;
         }
-        
+
         .header {
             position: fixed;
             top: 0;
@@ -31,13 +32,13 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .logo {
             font-size: 18px;
             font-weight: bold;
             color: #4CAF50;
         }
-        
+
         .data-source {
             background: rgba(76, 175, 80, 0.2);
             padding: 5px 10px;
@@ -45,7 +46,7 @@
             border: 1px solid #4CAF50;
             font-size: 12px;
         }
-        
+
         .controls-panel {
             position: fixed;
             top: 60px;
@@ -56,22 +57,22 @@
             padding: 20px;
             z-index: 1000;
             border: 1px solid #333;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             max-height: calc(100vh - 80px);
             overflow-y: auto;
         }
-        
+
         .controls-panel h3 {
             margin: 0 0 15px 0;
             color: #4CAF50;
             border-bottom: 1px solid #333;
             padding-bottom: 10px;
         }
-        
+
         .market-selector {
             margin-bottom: 20px;
         }
-        
+
         .market-selector select {
             width: 100%;
             padding: 8px;
@@ -81,14 +82,14 @@
             border-radius: 5px;
             font-size: 14px;
         }
-        
+
         .pattern-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 20px;
         }
-        
+
         .pattern-btn {
             padding: 10px;
             background: linear-gradient(45deg, #2196F3, #1976D2);
@@ -100,17 +101,17 @@
             transition: all 0.3s ease;
             text-align: center;
         }
-        
+
         .pattern-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
         }
-        
+
         .pattern-btn.active {
             background: linear-gradient(45deg, #4CAF50, #45a049);
             box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
         }
-        
+
         .clear-btn {
             width: 100%;
             padding: 12px;
@@ -122,7 +123,7 @@
             font-weight: bold;
             margin-bottom: 20px;
         }
-        
+
         .stats-panel {
             background: rgba(33, 150, 243, 0.1);
             padding: 15px;
@@ -130,14 +131,14 @@
             border: 1px solid #2196F3;
             margin-bottom: 15px;
         }
-        
+
         .stats-item {
             display: flex;
             justify-content: space-between;
             margin: 5px 0;
             font-size: 12px;
         }
-        
+
         .data-feed-info {
             background: rgba(76, 175, 80, 0.1);
             padding: 10px;
@@ -146,7 +147,7 @@
             font-size: 11px;
             line-height: 1.4;
         }
-        
+
         .alert-panel {
             background: rgba(255, 193, 7, 0.2);
             padding: 10px;
@@ -155,7 +156,7 @@
             margin-top: 15px;
             font-size: 11px;
         }
-        
+
         #tv_chart_container {
             position: absolute;
             top: 60px;
@@ -164,7 +165,7 @@
             bottom: 0;
             background: #000;
         }
-        
+
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -178,11 +179,11 @@
             z-index: 2000;
             font-size: 18px;
         }
-        
+
         .loading-overlay.hidden {
             display: none;
         }
-        
+
         .spinner {
             border: 3px solid #333;
             border-top: 3px solid #4CAF50;
@@ -192,12 +193,17 @@
             animation: spin 1s linear infinite;
             margin-right: 15px;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
+
         .pattern-info {
             background: rgba(0, 0, 0, 0.9);
             position: absolute;
@@ -210,22 +216,22 @@
             z-index: 500;
             display: none;
         }
-        
+
         .pattern-details {
             font-size: 12px;
             line-height: 1.4;
         }
-        
+
         .ratio-item {
             display: flex;
             justify-content: space-between;
             margin: 3px 0;
         }
-        
+
         .ratio-valid {
             color: #4CAF50;
         }
-        
+
         .ratio-invalid {
             color: #ff4444;
         }
@@ -247,7 +253,7 @@
 
     <div class="controls-panel">
         <h3>🎯 Pattern Detection Engine</h3>
-        
+
         <div class="market-selector">
             <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #ccc;">Market Selection:</label>
             <select id="symbolSelector" onchange="changeSymbol()">
@@ -335,7 +341,8 @@
 
         <div class="alert-panel">
             <strong>⚡ Live Market Mode</strong><br>
-            This scanner uses real market data. Patterns detected are based on actual price movements and can be used for live trading decisions.
+            This scanner uses real market data. Patterns detected are based on actual price movements and can be used
+            for live trading decisions.
         </div>
     </div>
 
@@ -354,7 +361,7 @@
                 confidence_threshold: 0.85
             },
             butterfly: {
-                name: "Butterfly", 
+                name: "Butterfly",
                 ratios: { AB_XA: [0.786], BC_AB: [0.382, 0.886], CD_BC: [1.618, 2.618], AD_XA: [1.272, 1.618] },
                 color: "#4ECDC4",
                 confidence_threshold: 0.80
@@ -394,15 +401,15 @@
         // Initialize with the EXACT working configuration that shows candlesticks
         function initMarketApp() {
             showLoading();
-            
+
             const loadingTimeout = setTimeout(() => {
                 hideLoading();
                 updatePatternStatus('Chart loaded - Ready for pattern analysis', 'success');
             }, 8000);
-            
+
             // Use EXACT same configuration as working harmonic-patterns.html
             var datafeedUrl = "https://demo-feed-data.tradingview.com";
-            
+
             widget = window.tvWidget = new TradingView.widget({
                 // debug: true,
                 fullscreen: false,
@@ -435,76 +442,76 @@
                     "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
                 }
             });
-                library_path: "charting_library/",
+            library_path: "charting_library/",
                 locale: "en",
-                disabled_features: ["use_localstorage_for_settings"],
-                enabled_features: ["study_templates"],
-                theme: "dark",
-                overrides: {
-                    "mainSeriesProperties.candleStyle.upColor": "#00C851",
+                    disabled_features: ["use_localstorage_for_settings"],
+                        enabled_features: ["study_templates"],
+                            theme: "dark",
+                                overrides: {
+                "mainSeriesProperties.candleStyle.upColor": "#00C851",
                     "mainSeriesProperties.candleStyle.downColor": "#ff4444",
-                    "mainSeriesProperties.candleStyle.drawWick": true,
-                    "mainSeriesProperties.candleStyle.drawBorder": true,
-                    "mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
-                    "mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
-                    "mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
-                    "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
+                        "mainSeriesProperties.candleStyle.drawWick": true,
+                            "mainSeriesProperties.candleStyle.drawBorder": true,
+                                "mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
+                                    "mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
+                                        "mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
+                                            "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
                 }
-            });
-                library_path: "charting_library/",
-                locale: "en",
+        });
+        library_path: "charting_library/",
+            locale: "en",
                 disabled_features: ["use_localstorage_for_settings"],
-                enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
-                charts_storage_url: 'https://saveload.tradingview.com',
-                charts_storage_api_version: "1.1",
-                client_id: 'tradingview.com',
-                user_id: 'public_user_id',
-                theme: "dark",
-                
-                // Enable symbol search and switching
-                enable_publishing: false,
-                allow_symbol_change: true,
-                
-                overrides: {
-                    "mainSeriesProperties.candleStyle.upColor": "#00C851",
-                    "mainSeriesProperties.candleStyle.downColor": "#ff4444",
+                    enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
+                        charts_storage_url: 'https://saveload.tradingview.com',
+                            charts_storage_api_version: "1.1",
+                                client_id: 'tradingview.com',
+                                    user_id: 'public_user_id',
+                                        theme: "dark",
+
+                                            // Enable symbol search and switching
+                                            enable_publishing: false,
+                                                allow_symbol_change: true,
+
+                                                    overrides: {
+            "mainSeriesProperties.candleStyle.upColor": "#00C851",
+                "mainSeriesProperties.candleStyle.downColor": "#ff4444",
                     "mainSeriesProperties.candleStyle.drawWick": true,
-                    "mainSeriesProperties.candleStyle.drawBorder": true,
-                    "mainSeriesProperties.candleStyle.borderColor": "#378658",
-                    "mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
-                    "mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
-                    "mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
-                    "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
+                        "mainSeriesProperties.candleStyle.drawBorder": true,
+                            "mainSeriesProperties.candleStyle.borderColor": "#378658",
+                                "mainSeriesProperties.candleStyle.borderUpColor": "#00C851",
+                                    "mainSeriesProperties.candleStyle.borderDownColor": "#ff4444",
+                                        "mainSeriesProperties.candleStyle.wickUpColor": "#00C851",
+                                            "mainSeriesProperties.candleStyle.wickDownColor": "#ff4444",
                 }
             });
 
-            widget.onChartReady(() => {
-                console.log('Chart is ready - Harmonic Pattern Scanner initialized with WORKING candlesticks');
-                clearTimeout(loadingTimeout);
-                hideLoading();
-                
-                // Enable drawing tools like the original
-                widget.chart().createStudy('Fibonacci Retracement', false, false);
-                
-                const chart = widget.chart();
-                console.log('Chart API available with candlestick data');
-                
-                startMarketDataMonitoring();
-                updatePatternStatus('✅ TradingView Chart Ready - Candlesticks loaded', 'success');
-                
-                // Auto-enable first pattern
-                setTimeout(() => {
-                    togglePattern('gartley');
-                }, 2000);
-            });
+        widget.onChartReady(() => {
+            console.log('Chart is ready - Harmonic Pattern Scanner initialized with WORKING candlesticks');
+            clearTimeout(loadingTimeout);
+            hideLoading();
 
-            // Error handling
-            widget.onError = (error) => {
-                console.error('Chart error:', error);
-                clearTimeout(loadingTimeout);
-                hideLoading();
-                updatePatternStatus('Chart error - Please refresh page', 'error');
-            };
+            // Enable drawing tools like the original
+            widget.chart().createStudy('Fibonacci Retracement', false, false);
+
+            const chart = widget.chart();
+            console.log('Chart API available with candlestick data');
+
+            startMarketDataMonitoring();
+            updatePatternStatus('✅ TradingView Chart Ready - Candlesticks loaded', 'success');
+
+            // Auto-enable first pattern
+            setTimeout(() => {
+                togglePattern('gartley');
+            }, 2000);
+        });
+
+        // Error handling
+        widget.onError = (error) => {
+            console.error('Chart error:', error);
+            clearTimeout(loadingTimeout);
+            hideLoading();
+            updatePatternStatus('Chart error - Please refresh page', 'error');
+        };
         }
 
         function showLoading() {
@@ -530,7 +537,7 @@
             document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
             document.getElementById('patternCount').textContent = detectedPatterns.length;
             document.getElementById('activeScanners').textContent = activePatterns.size;
-            
+
             // Simulate real-time data quality monitoring
             marketDataQuality = Math.random() > 0.1 ? 100 : Math.floor(Math.random() * 20) + 80;
             const qualityElement = document.getElementById('dataQuality');
@@ -558,10 +565,10 @@
         // Simplified and faster pattern scanning
         function performMarketScan(patternType) {
             const chart = widget.chart();
-            
+
             try {
                 console.log(`Activating ${patternType} pattern detection...`);
-                
+
                 // Try to enable built-in pattern recognition
                 if (patternType === 'gartley') {
                     chart.createStudy('Fibonacci Retracement', false, false);
@@ -570,14 +577,14 @@
                 } else {
                     chart.createStudy('Chart Patterns', false, false);
                 }
-                
+
                 updatePatternStatus(`${patternType} scanner active - Use drawing tools for manual patterns`, 'success');
-                
+
                 // Quick demo pattern for immediate feedback
                 setTimeout(() => {
                     showDemoPattern(patternType);
                 }, 1000);
-                
+
             } catch (error) {
                 console.log('Using simplified pattern mode:', error);
                 updatePatternStatus(`${patternType} mode enabled - Check chart toolbar`, 'info');
@@ -588,9 +595,9 @@
         function showDemoPattern(patternType) {
             const infoDiv = document.getElementById('patternInfo');
             const detailsDiv = document.getElementById('patternDetails');
-            
+
             const patternInfo = MARKET_PATTERNS[patternType];
-            
+
             detailsDiv.innerHTML = `
                 <div><strong>${patternInfo.name} Pattern Scanner</strong></div>
                 <div>Status: Active ✅</div>
@@ -604,9 +611,9 @@
                     💡 Tip: Look for X-A-B-C-D swing points on the chart
                 </div>
             `;
-            
+
             infoDiv.style.display = 'block';
-            
+
             // Auto-hide after 8 seconds
             setTimeout(() => {
                 infoDiv.style.display = 'none';
@@ -616,14 +623,14 @@
         // Fallback method for manual pattern detection
         function performManualPatternScan(patternType) {
             const chart = widget.chart();
-            
+
             // Get real market data
             chart.getBars().then(bars => {
                 if (!bars || bars.length < 100) return;
-                
+
                 const swingPoints = detectMarketSwings(bars);
                 const patterns = findHarmonicPatterns(swingPoints, patternType);
-                
+
                 patterns.forEach(pattern => {
                     if (isHighQualityPattern(pattern)) {
                         drawMarketPattern(pattern);
@@ -631,7 +638,7 @@
                         showPatternAlert(pattern);
                     }
                 });
-                
+
             }).catch(error => {
                 console.error('Market data error:', error);
             });
@@ -643,7 +650,7 @@
 
             const chart = widget.chart();
             const points = pattern.points;
-            
+
             try {
                 // Use TradingView's pattern drawing API
                 chart.createShape(
@@ -661,9 +668,9 @@
                         zOrder: 'top'
                     }
                 );
-                
+
                 console.log(`Drew ${pattern.name} pattern using TradingView native tools`);
-                
+
             } catch (error) {
                 console.warn('Native pattern drawing failed, using basic lines');
                 // Fallback to basic line drawing
@@ -675,7 +682,7 @@
         function drawBasicPattern(pattern) {
             const chart = widget.chart();
             const points = pattern.points;
-            
+
             // Draw main pattern structure with basic trend lines
             for (let i = 0; i < points.length - 1; i++) {
                 chart.createShape(
@@ -691,7 +698,7 @@
                     }
                 );
             }
-            
+
             // Add pattern label
             chart.createShape(
                 { time: points[4].time, price: points[4].price },
@@ -711,12 +718,12 @@
         function detectMarketSwings(bars, minSwingSize = 8) {
             const swings = [];
             const lookback = minSwingSize;
-            
+
             for (let i = lookback; i < bars.length - lookback; i++) {
                 const current = bars[i];
                 let isSwingHigh = true;
                 let isSwingLow = true;
-                
+
                 // Check if current bar is swing high/low
                 for (let j = i - lookback; j <= i + lookback; j++) {
                     if (j !== i) {
@@ -724,7 +731,7 @@
                         if (bars[j].low <= current.low) isSwingLow = false;
                     }
                 }
-                
+
                 if (isSwingHigh) {
                     swings.push({
                         index: i,
@@ -743,7 +750,7 @@
                     });
                 }
             }
-            
+
             return swings.sort((a, b) => a.time - b.time);
         }
 
@@ -751,19 +758,19 @@
         function findHarmonicPatterns(swings, patternType) {
             const patterns = [];
             const patternDef = MARKET_PATTERNS[patternType];
-            
+
             if (swings.length < 5) return patterns;
 
             // Use sliding window approach for better performance
             for (let i = 0; i < swings.length - 4; i++) {
                 const window = swings.slice(i, i + 5);
-                
+
                 if (isValidPatternStructure(window)) {
                     const [X, A, B, C, D] = window;
-                    
+
                     if (validateMarketPattern(X, A, B, C, D, patternDef)) {
                         const confidence = calculatePatternConfidence(X, A, B, C, D, patternDef);
-                        
+
                         if (confidence >= patternDef.confidence_threshold) {
                             patterns.push({
                                 type: patternType,
@@ -780,31 +787,31 @@
                     }
                 }
             }
-            
+
             return patterns;
         }
 
         function isValidPatternStructure(points) {
             if (points.length !== 5) return false;
-            
+
             // Check alternating high/low structure
             const [X, A, B, C, D] = points;
-            return (X.type !== A.type && A.type !== B.type && 
-                    B.type !== C.type && C.type !== D.type);
+            return (X.type !== A.type && A.type !== B.type &&
+                B.type !== C.type && C.type !== D.type);
         }
 
         function validateMarketPattern(X, A, B, C, D, patternDef) {
             const tolerance = 0.05; // 5% tolerance for real market conditions
-            
+
             const AB_XA = Math.abs(B.price - A.price) / Math.abs(A.price - X.price);
             const BC_AB = Math.abs(C.price - B.price) / Math.abs(B.price - A.price);
             const CD_BC = Math.abs(D.price - C.price) / Math.abs(C.price - B.price);
             const AD_XA = Math.abs(D.price - A.price) / Math.abs(A.price - X.price);
-            
+
             return isRatioValid(AB_XA, patternDef.ratios.AB_XA, tolerance) &&
-                   isRatioValid(BC_AB, patternDef.ratios.BC_AB, tolerance) &&
-                   isRatioValid(CD_BC, patternDef.ratios.CD_BC, tolerance) &&
-                   isRatioValid(AD_XA, patternDef.ratios.AD_XA, tolerance);
+                isRatioValid(BC_AB, patternDef.ratios.BC_AB, tolerance) &&
+                isRatioValid(CD_BC, patternDef.ratios.CD_BC, tolerance) &&
+                isRatioValid(AD_XA, patternDef.ratios.AD_XA, tolerance);
         }
 
         function isRatioValid(actual, targets, tolerance) {
@@ -818,13 +825,13 @@
                 CD_BC: Math.abs(D.price - C.price) / Math.abs(C.price - B.price),
                 AD_XA: Math.abs(D.price - A.price) / Math.abs(A.price - X.price)
             };
-            
+
             let totalScore = 0;
             let ratioCount = 0;
-            
+
             for (const [key, targets] of Object.entries(patternDef.ratios)) {
                 const actual = ratios[key];
-                const bestMatch = targets.reduce((best, target) => 
+                const bestMatch = targets.reduce((best, target) =>
                     Math.abs(actual - target) < Math.abs(actual - best) ? target : best
                 );
                 const deviation = Math.abs(actual - bestMatch) / bestMatch;
@@ -832,7 +839,7 @@
                 totalScore += score;
                 ratioCount++;
             }
-            
+
             return totalScore / ratioCount;
         }
 
@@ -846,8 +853,8 @@
         }
 
         function isHighQualityPattern(pattern) {
-            return pattern.confidence >= 0.75 && 
-                   pattern.points.every(p => p.volume > 0); // Has volume data
+            return pattern.confidence >= 0.75 &&
+                pattern.points.every(p => p.volume > 0); // Has volume data
         }
 
         // Professional pattern drawing
@@ -856,7 +863,7 @@
 
             const chart = widget.chart();
             const points = pattern.points;
-            
+
             try {
                 // Draw main pattern structure
                 for (let i = 0; i < points.length - 1; i++) {
@@ -874,11 +881,11 @@
                         }
                     );
                 }
-                
+
                 // Draw PRZ zone
                 const przHigh = Math.max(pattern.prz_start, pattern.prz_end);
                 const przLow = Math.min(pattern.prz_start, pattern.prz_end);
-                
+
                 chart.createShape(
                     { time: points[3].time, price: przHigh },
                     { time: points[4].time, price: przLow },
@@ -892,7 +899,7 @@
                         }
                     }
                 );
-                
+
                 // Add professional label
                 chart.createShape(
                     { time: points[4].time, price: points[4].price },
@@ -907,7 +914,7 @@
                         }
                     }
                 );
-                
+
             } catch (error) {
                 console.error('Error drawing market pattern:', error);
             }
@@ -916,7 +923,7 @@
         function showPatternAlert(pattern) {
             const infoDiv = document.getElementById('patternInfo');
             const detailsDiv = document.getElementById('patternDetails');
-            
+
             detailsDiv.innerHTML = `
                 <div><strong>${pattern.name} Pattern</strong></div>
                 <div>Direction: ${pattern.bullish ? 'Bullish 🔼' : 'Bearish 🔽'}</div>
@@ -927,9 +934,9 @@
                     Real-time detection based on live market data
                 </div>
             `;
-            
+
             infoDiv.style.display = 'block';
-            
+
             // Auto-hide after 10 seconds
             setTimeout(() => {
                 infoDiv.style.display = 'none';
@@ -939,27 +946,27 @@
         // UI Control Functions - Enhanced to use TradingView native patterns
         function togglePattern(patternType) {
             const button = document.querySelector(`[data-pattern="${patternType}"]`);
-            
+
             if (activePatterns.has(patternType)) {
                 activePatterns.delete(patternType);
                 button.classList.remove('active');
-                
+
                 // Disable the specific pattern in TradingView
                 try {
                     widget.chart().removeStudy(`${patternType}_patterns`);
                 } catch (error) {
                     console.log('Pattern study removal not supported');
                 }
-                
+
                 updatePatternStatus(`${patternType} pattern scanner disabled`, 'info');
-                
+
             } else {
                 activePatterns.add(patternType);
                 button.classList.add('active');
-                
+
                 // Enable TradingView's native pattern recognition
                 performMarketScan(patternType);
-                
+
                 updatePatternStatus(`${patternType} pattern scanner enabled - Check chart drawing tools`, 'success');
             }
         }
@@ -968,7 +975,7 @@
             // Update the data source indicator
             const dataSource = document.getElementById('dataSource');
             dataSource.textContent = message;
-            
+
             // Change color based on type
             if (type === 'success') {
                 dataSource.style.borderColor = '#4CAF50';
@@ -980,7 +987,7 @@
                 dataSource.style.borderColor = '#2196F3';
                 dataSource.style.backgroundColor = 'rgba(33, 150, 243, 0.2)';
             }
-            
+
             // Reset after 5 seconds
             setTimeout(() => {
                 dataSource.textContent = '📡 Real-Time Market Data';
@@ -992,7 +999,7 @@
         function changeSymbol() {
             const selector = document.getElementById('symbolSelector');
             currentSymbol = selector.value;
-            
+
             if (widget && widget.chart) {
                 widget.chart().setSymbol(currentSymbol, () => {
                     console.log(`Switched to ${currentSymbol}`);
@@ -1011,20 +1018,20 @@
                     // Clear all TradingView studies and drawings
                     widget.chart().removeAllStudies();
                     widget.chart().removeAllShapes();
-                    
+
                     // Reset active patterns
                     activePatterns.clear();
                     detectedPatterns = [];
-                    
+
                     // Reset all pattern buttons
                     document.querySelectorAll('.pattern-btn').forEach(btn => {
                         btn.classList.remove('active');
                     });
-                    
+
                     document.getElementById('patternInfo').style.display = 'none';
-                    
+
                     updatePatternStatus('All patterns and studies cleared', 'info');
-                    
+
                 } catch (error) {
                     console.error('Error clearing patterns:', error);
                     updatePatternStatus('Error clearing patterns', 'error');
@@ -1036,4 +1043,5 @@
         window.addEventListener('DOMContentLoaded', initMarketApp);
     </script>
 </body>
+
 </html>
